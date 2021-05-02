@@ -3,8 +3,6 @@
         
         <p>QSR doesn't have a focus on multicolor, nor does it have a focus on monocolor. Players are free to mix and match as they see fit, as there are no traditional 2-color archetypes, but should keep in mind that color weight is used as a point of balance in the card design <i>(i.e. 5C goodstuff might not take you very far, but feel free to experiment)</i>.</p>
 
-        <p>The set doesn't have a focus on multicolor, nor does it have a focus on monocolor. Players are free to mix and match as they see fit, as there are no traditional 2-color archetypes, but should keep in mind that color weight is used as a point of balance for the design of the cards.</p>
-
         <h1>LIMITED</h1>
 
         <p><b>Quasar</b> limited is pretty normal, with one fairly important change: <b>there are no explicit limited archetypes</b>. What this means is that rather than have specific archetypes for the 2-color combinations, the multicolor cards in the set (specifically the uncommons) are created in a way that supports the core strategy of each of the individual colors of the card.</p>

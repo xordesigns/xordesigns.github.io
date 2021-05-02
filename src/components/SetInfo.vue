@@ -36,6 +36,26 @@
 
         <p>QSR tells the story of a galactic war, where 5 factions fight for control over the titular quasar. In-set, each card that belongs to one of the factions has its faction's respective watermark. The set also has a few nonstandard stylistic choices, such as: Bolded and capitalized keywords when on a standalone line, bordered mana symbols, the addition of 'nonmana' as shorthand wording etc. And, to top it all off, due to the set's nontraditional sci-fi flavor, it features a new set of card frames, designed to better fit the setting. The frames also have a Sync variant, to make it easier to spot cards with the ability at a glance. The set's story is additionaly told through story articles, which can be found here.</p>
 
+        <h3>SET TEASER</h3>
+
+        <p>Some things you can expect in <b>QSR</b>:</p>
+        <ul>
+            <li>The return of a mechanic with a functionally-unique card template</li>
+            <li>A green card with the text "...deals combat damage to a player, create that many..."</li>
+            <li>Triple digits in rules text</li>
+            <li>A black creature that's a throwback to a very angry Dredge staple</li>
+            <li>"Add <i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i><i class="ms ms-r ms-cost ms-shadow"></i>"</li>
+            <li>A legendary Xeno Pirate</li>
+            <li>A couple Mercenaries</li>
+            <li>At least five Droid Giants</li>
+            <li>A mono-red mana dork</li>
+            <li>Rare reminder text that was last printed on a card from original Mirrodin block</li>
+            <li>Spellskite's distant cousin</li>
+            <li>Boonweaver Giant's long lost (metallic) twin brother</li>
+            <li>A green Oblivion-Ring style effect</li>
+            <li>"...except it’s a 4/4 black Droid Zombie artifact creature with menace..."</li>
+        </ul>
+
         <h3>STATS</h3>
         <ul>
             <li><b>No. of cards:</b> 275 (110 common/85 uncommon/50 rare/15 mythic/15 basic lands)</li>

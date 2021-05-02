@@ -2,16 +2,34 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import Factions from '../components/Factions.vue'
 import SetInfo from '../components/SetInfo.vue'
 import PlayGuide from '../components/PlayGuide.vue'
+import Flavor from '../components/Flavor.vue'
+import Story from '../components/Story.vue'
 
 const routes = [
   {
     path: '/',
-    redirect: '/factions'
+    redirect: '/flavor'
   },
   {
-    path: '/factions',
-    name: 'Factions',
-    component: Factions
+    path: '/flavor',
+    name: 'Flavor',
+    component: Flavor,
+    children:[
+      {
+        path: '',
+        redirect: '/flavor/factions'
+      },
+      {
+        path: 'factions',
+        name: 'Factions',
+        component: Factions
+      },
+      {
+        path: 'story',
+        name: 'Story',
+        component: Story
+      },
+    ]
   },
   {
     path: '/setinfo',

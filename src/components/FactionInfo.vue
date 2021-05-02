@@ -1,66 +1,51 @@
 <template>
   <div>
-      <div class="image-wrapper">
-        <img v-for="imageIndex in faction.cardImages" :key="imageIndex" :src="imageIndex" class="faction-card" />
-      </div>
+      <splide id="faction-cards" :options="options" :slides="faction.cardImages">
+        <splide-slide v-for="imageName in faction.cardImages" :key="imageName">
+          <img :src="imageName">
+        </splide-slide>
+      </splide>
+
       <div class="faction-text">
-        <h1>{{ faction.name }}</h1>
+        <h1 id="faction-title">
+          <img id="faction-logo" :src="faction.logoImage"/>
+          <span :style="{ fontSize: faction.name.length > 11 ? '0.8em' : '1em' }">{{ faction.name }}</span>
+        </h1>
+        <hr id="separator">
         <p>{{ faction.description }}</p>
       </div>
   </div>
 </template>
 
 <script>
+import { Splide, SplideSlide } from '@splidejs/vue-splide'
+import '@splidejs/splide/dist/css/themes/splide-default.min.css';
 export default {
   name: "FactionInfo",
+  data() {
+    return {
+      options: {
+        autoplay: true,
+        rewind: true,
+        width: "450px",
+        pagination: false
+      }
+    }
+  },
   props: {
     faction: {},
   },
+  components: {
+    Splide,
+    SplideSlide
+  }
 };
 </script>
 
 <style scoped>
 .image-wrapper {
-  position: relative;
-  flex-basis: 450px;
+  width:450px;
   height: 627px;
-}
-
-@keyframes crossfade {
-  0% {
-    opacity: 1;
-  }
-  27% {
-    opacity: 1;
-  }
-  33% {
-    opacity: 0;
-  }
-  95% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-.faction-card {
-  position: absolute;
-  top: 0%;
-  left: 0%;
-  animation-name: crossfade;
-  animation-duration: 12s;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-
-.faction-card:nth-of-type(1) {
-  animation-delay: 8s;
-}
-.faction-card:nth-of-type(2) {
-  animation-delay: 4s;
-}
-.faction-card:nth-of-type(3) {
-  animation-delay: 0s;
 }
 
 .faction-text {
@@ -68,5 +53,24 @@ export default {
   display: inline-block;
   width: 510px;
   padding: 10px;
+}
+
+#faction-title{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin:0;
+}
+
+#faction-logo{
+  height: 3em;
+  width: 3em;
+  margin-right: 0.2em;
+}
+
+#separator{
+  border: 1px solid #444;
+  background-color: #444;
+  width:50%;
 }
 </style>

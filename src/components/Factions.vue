@@ -1,5 +1,6 @@
 <template>
   <div>
+    <hr>
     <div id="factions" class="factions centered">
       <div v-for="faction of factions.colored" :key="faction.color" class="img" @click="changeFaction(faction.color)">
         <img :src="faction.splashImage" />

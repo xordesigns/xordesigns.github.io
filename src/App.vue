@@ -1,22 +1,27 @@
 <template>
   <div id="container" class="centered">
     <nav class="nav">
-      <router-link :to="{ name: 'Factions' }" class="nav-item"
-        >Factions &amp; Story</router-link
-      >
-      <router-link :to="{ name: 'SetInfo' }" class="nav-item"
-        >Set Info</router-link
-      >
-      <router-link :to="{ name: 'PlayGuide' }" class="nav-item"
-        >Play Guide</router-link
-      >
+      <router-link to="/flavor" class="nav-item">Factions &amp; Story</router-link>
+
+      <router-link :to="{ name: 'SetInfo' }" class="nav-item">Set Info</router-link>
+
+      <router-link :to="{ name: 'PlayGuide' }" class="nav-item">Play Guide</router-link>
+
+      <a
+        to="/"
+        href="https://planesculptors.net/set/quasar#cards"
+        target="_blank"
+        class="nav-item link">
+          Card List
+      </a>
+
       <a
         to="/"
         href="https://discord.com/invite/hkWs3KQ"
         target="_blank"
-        class="nav-item"
-        >Discord</a
-      >
+        class="nav-item link">
+          Discord
+      </a>
     </nav>
 
     <img class="splash centered" src="./assets/qsr_splash.png" />
@@ -112,7 +117,7 @@ hr {
   text-decoration: none;
 }
 
-.nav-item:last-child {
+.nav-item.link {
   border: none;
   text-decoration-line: underline;
 }
