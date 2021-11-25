@@ -12,7 +12,7 @@
           <span :style="{ fontSize: faction.name.length > 11 ? '0.8em' : '1em' }">{{ faction.name }}</span>
         </h1>
         <hr id="separator">
-        <p>{{ faction.description }}</p>
+        <div v-html="faction.description"></div>
       </div>
   </div>
 </template>

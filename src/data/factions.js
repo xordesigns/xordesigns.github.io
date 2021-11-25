@@ -3,7 +3,7 @@ export const factions = {
         {
             color: "w",
             name: "MALKUTH",
-            description: "To ensure order is kept, one must be strong enough to prevent the rise of chaos, and there are none stronger than the one whose hand holds the reigns of the Crucible. Malkuth will see to it that order is restored to the galaxy, no matter the cost. Named 'The Root of Hope', Malkuth's leader rules with a silver tongue and an iron fist. Under Enai's guidance, forces gather in an effort to end the war and usher in a new age of galactic peace and prosperity: a domain of absolute order. After all, what is freedom compared to the power to stem the flow of chaos itself?",
+            description: "<p>To ensure order is kept, one must be strong enough to prevent the rise of chaos, and there are none stronger than the one whose hand holds the reigns of the Crucible.</p> <p>Malkuth will see to it that order is restored to the galaxy, no matter the cost. Named 'The Root of Hope', Malkuth's leader rules with a silver tongue and an iron fist. Under Enai's guidance, forces gather in an effort to end the war and usher in a new age of galactic peace and prosperity: a domain of absolute order. After all, what is freedom compared to the power to stem the flow of chaos itself?</p>",
             splashImage: require("../assets/spl_w.png"),
             logoImage: require("../assets/logo_w.png"),
             cardImages: [

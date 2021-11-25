@@ -1,6 +1,7 @@
 <template>
   <div>
     <hr>
+    <!-- The 5 colored factions -->
     <div id="factions" class="factions centered">
       <div v-for="faction of factions.colored" :key="faction.color" class="img" @click="changeFaction(faction.color)">
         <img :src="faction.splashImage" />
@@ -9,6 +10,7 @@
       </div>
     </div>
 
+    <!-- Neutral (horizontal) faction -->
     <div id="neutral" class="factions centered" @click="changeFaction(factions.neutral.color)">
       <div class="img">
         <img :src="factions.neutral.splashImage" />
