@@ -7,11 +7,17 @@ import Story from '../components/Story.vue'
 import QuasarRoot from '../components/QuasarRoot.vue'
 import Q2 from '../components/Q2.vue'
 import Q2SetInfo from '../components/Q2SetInfo.vue'
+import MapEditor from '../components/Arena/MapEditor.vue'
 
 const routes = [
   {
     path: '/',
     redirect: '/flavor'
+  },
+  {
+    path: '/arena',
+    name: 'Arena',
+    component: MapEditor
   },
   {
     path:'/quasar',
