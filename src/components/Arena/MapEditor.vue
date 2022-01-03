@@ -3,8 +3,12 @@
     <div id="mapContainer">
       <table id="map">
         <tbody>
-          <tr v-for="row in +mapHeight" :key="row">
-            <td v-for="col in +mapWidth" :key="col" @click="selectTile($event, row, col)" @contextmenu="customRightClick($event, row, col)" title="Explanation of the tile"></td>
+          <tr v-for="row in mapTiles" :key="row">
+            <td v-for="col of row" :key="col"
+            :class="col.className"
+            @click="selectTile($event, row, col)"
+            @contextmenu="customRightClick($event, row, col)"
+            title="Explanation of the tile"></td>
           </tr>
         </tbody>
       </table>
@@ -15,11 +19,11 @@
     <div id="controls">
       <label for="mapWidth">Map Width: {{ mapWidth }}</label>
       <br />
-      <input type="range" name="mapWidth" id="mapWidth" min="3" max="9" v-model="mapWidth"/>
+      <input type="range" name="mapWidth" id="mapWidth" min="3" max="9" v-model.number="mapWidth"/>
       <br />
       <label for="mapWidth">Map Height: {{ mapHeight }}</label>
       <br />
-      <input type="range" name="mapHeight" id="mapHeight" min="3" max="9" v-model="mapHeight"/>
+      <input type="range" name="mapHeight" id="mapHeight" min="3" max="9" v-model.number="mapHeight"/>
       <br />
 
       <input name="mapCodeInput" id="mapCodeInput">
@@ -37,31 +41,70 @@
     <div id="contextmenu">
       <ul>
         <li class="ctxmenu-item" onclick="location.reload()">Reload page</li>
-        <li class="ctxmenu-item" onclick="randomBoxColor()">Random box color</li>
-        <li class="ctxmenu-item" onclick="addText()">Add Lipsum header</li>
       </ul>
     </div>
   </div>
 </template>
 
 <script>
+import {tiles} from "./tiles"
 export default {
   name: "MapEditor",
   data() {
     return {
-      mapWidth: 3,
-      mapHeight: 3,
+      mapWidth: 5,
+      mapHeight: 5,
       tileSize: 100,
       mapTiles: [],
-      selectedTiles: []
+      selectedTiles: [],
+      bCustomContextMenuShown: false
     };
   },
-  methods: {
-    customRightClick(e, row, col) {
-        e.preventDefault();
-        console.log(`${row}, ${col}`);
+  created()
+  {
+    for (let row = 0; row < this.mapHeight; row++) {
+      this.mapTiles.push([])
+      for(let col = 0; col < this.mapWidth; col++){
+        this.mapTiles[row].push(tiles.empty)
+      }
+    }
+  },
+  watch:{
+    mapWidth: function(newValue, oldValue){
+      if(newValue < oldValue){
+        this.mapTiles = this.mapTiles.map(row => row.slice(0, -1))
+      }
+      else if(newValue > oldValue){
+        this.mapTiles = this.mapTiles.map(row => [...row, tiles.empty])
+      }
     },
-    selectTile(e, row, col){
+    mapHeight: function(newValue, oldValue){
+      if(newValue < oldValue){
+        this.mapTiles = this.mapTiles.slice(0, -1)
+        console.log(this.mapTiles);
+      }
+      else if(newValue > oldValue){
+        console.log(`map width: ${this.mapWidth}`);
+        let arr = Array(this.mapWidth).fill(tiles.empty)
+        console.log(arr);
+        this.mapTiles.push(arr)
+        console.log(this.mapTiles);
+      }
+    }
+  },
+  methods: {
+    /* customRightClick(e, row, col)
+    {
+        e.preventDefault();
+        let contextMenu = document.getElementById("contextmenu")
+        console.log(`${row}, ${col}`);
+        bCustomContextMenuShown = true;
+        contextMenu.style.left = `${e.clientX}px`;
+        contextMenu.style.top = `${e.clientY}px`;
+        setCtxMenuVisibility();
+    },
+    selectTile(e, row, col)
+    {
         let existingIndex = this.selectedTiles.indexOf(`${row}${col}`);
         if(existingIndex > -1)
         {
@@ -72,7 +115,11 @@ export default {
             this.selectedTiles.push(`${row}${col}`);
         }
         console.log(this.selectedTiles);
-    }
+    },
+    setCtxMenuVisibility()
+    {
+      contextMenu.style.visibility = bCustomContextMenuShown ? 'visible' : 'hidden'
+    } */
   },
 };
 </script>
@@ -97,6 +144,10 @@ td {
   width: 100px;
   height: 100px;
   background: white;
+}
+
+.empty{
+  background: red;
 }
 
 #contextmenu{
