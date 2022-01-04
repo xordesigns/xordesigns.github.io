@@ -1,11 +1,17 @@
 export const tiles = {
     empty: {
-        className: "empty"
+        baseClassName: "empty",
+        partialClassName: "",
+        code: "E"
     },
     wall: {
-        className: "wall"
+        baseClassName: "wall",
+        partialClassName: "",
+        code: "W"
     },
     hole: {
-        className: "hole"
+        baseClassName: "hole",
+        partialClassName: "",
+        code: "H"
     },
 }

@@ -3,27 +3,27 @@
     <div id="mapContainer">
       <table id="map">
         <tbody>
-          <tr v-for="row in mapTiles" :key="row">
-            <td v-for="col of row" :key="col"
-            :class="col.className"
-            @click="selectTile($event, row, col)"
+          <tr v-for="(row, rowIndex) in mapTiles" :key="rowIndex">
+            <td v-for="(col, colIndex) of row" :key="colIndex"
+            :class="[col.baseClassName, col.partialClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
+            @click="selectTile($event, rowIndex, colIndex)"
             @contextmenu="customRightClick($event, row, col)"
-            title="Explanation of the tile"></td>
+            title="Explanation of the tile">{{String(rowIndex)+colIndex}}</td>
           </tr>
         </tbody>
       </table>
-      <label for="Tilesize">Tile size: {{ tileSize }}</label>
-      <input type="range" name="Tilesize" min="50" max="200" v-model="tileSize"/>
+      <!-- <label for="Tilesize">Tile size: {{ tileSize }}</label> -->
+      <!-- <input type="range" name="Tilesize" min="50" max="200" v-model="tileSize"/> -->
     </div>
 
     <div id="controls">
       <label for="mapWidth">Map Width: {{ mapWidth }}</label>
       <br />
-      <input type="range" name="mapWidth" id="mapWidth" min="3" max="9" v-model.number="mapWidth"/>
+      <input type="range" name="mapWidth" id="mapWidth" value="5" min="3" max="9" @change="changeMapWidth($event)"/>
       <br />
       <label for="mapWidth">Map Height: {{ mapHeight }}</label>
       <br />
-      <input type="range" name="mapHeight" id="mapHeight" min="3" max="9" v-model.number="mapHeight"/>
+      <input type="range" name="mapHeight" id="mapHeight" value="5" min="3" max="9" @change="changeMapHeight($event)"/>
       <br />
 
       <input name="mapCodeInput" id="mapCodeInput">
@@ -36,6 +36,9 @@
 
       <input readonly name="mapCodeOutput" id="mapCodeOutput">
       <button @click="generateMapCode()">Copy to clipboard</button>
+
+      <button @click="selectAll()">Select All</button>
+      <button @click="deselectAll()">Deselect All</button>
     </div>
 
     <div id="contextmenu">
@@ -56,7 +59,7 @@ export default {
       mapHeight: 5,
       tileSize: 100,
       mapTiles: [],
-      selectedTiles: [],
+      selectedTiles: {},
       bCustomContextMenuShown: false
     };
   },
@@ -69,30 +72,35 @@ export default {
       }
     }
   },
-  watch:{
-    mapWidth: function(newValue, oldValue){
-      if(newValue < oldValue){
+  methods: {
+    changeMapWidth(e){
+      let newValue = +e.target.value;
+      if(newValue < this.mapWidth){
         this.mapTiles = this.mapTiles.map(row => row.slice(0, -1))
+        for(let i = 0; i < this.mapHeight; i++){
+          delete this.selectedTiles[`${i}${newValue}`]
+        }
       }
-      else if(newValue > oldValue){
+      else if(newValue > this.mapWidth){
         this.mapTiles = this.mapTiles.map(row => [...row, tiles.empty])
       }
+
+      this.mapWidth = newValue;
     },
-    mapHeight: function(newValue, oldValue){
-      if(newValue < oldValue){
+    changeMapHeight(e){
+      let newValue = +e.target.value;
+      if(newValue < this.mapHeight){
         this.mapTiles = this.mapTiles.slice(0, -1)
-        console.log(this.mapTiles);
+        for(let i = 0; i < this.mapWidth; i++){
+          delete this.selectedTiles[`${newValue}${i}`]
+        }
       }
-      else if(newValue > oldValue){
-        console.log(`map width: ${this.mapWidth}`);
-        let arr = Array(this.mapWidth).fill(tiles.empty)
-        console.log(arr);
-        this.mapTiles.push(arr)
-        console.log(this.mapTiles);
+      else if(newValue > this.mapHeight){
+        this.mapTiles.push(Array(this.mapWidth).fill(tiles.empty))
       }
-    }
-  },
-  methods: {
+
+      this.mapHeight = newValue;
+    },
     /* customRightClick(e, row, col)
     {
         e.preventDefault();
@@ -102,21 +110,67 @@ export default {
         contextMenu.style.left = `${e.clientX}px`;
         contextMenu.style.top = `${e.clientY}px`;
         setCtxMenuVisibility();
-    },
+    },*/
     selectTile(e, row, col)
     {
-        let existingIndex = this.selectedTiles.indexOf(`${row}${col}`);
-        if(existingIndex > -1)
-        {
-            this.selectedTiles.splice(existingIndex, 1);
-        }
-        else
-        {
-            this.selectedTiles.push(`${row}${col}`);
-        }
-        console.log(this.selectedTiles);
+      let tileIndex = `${row}${col}`;
+      let existingSelection = this.selectedTiles[tileIndex];
+      if(existingSelection)
+      {
+          delete this.selectedTiles[tileIndex]
+      }
+      else
+      {
+          this.selectedTiles[tileIndex] = true
+      }
+      console.log(this.selectedTiles);
     },
-    setCtxMenuVisibility()
+    selectAll(){
+      for (let row = 0; row < this.mapHeight; row++) {
+        for (let col = 0; col < this.mapWidth; col++) {
+          this.selectedTiles[`${row}${col}`] = true;
+        }
+      }
+    },
+    deselectAll(){
+      this.selectedTiles = {}
+    },
+    loadMapCode(){
+      let input = document.getElementById('mapCodeInput').value;
+      let rows = input.split('|');
+      if(rows.some(row => row.length !== rows[0].length)){
+        alert('Maps must be rectangular. Fix the input and try again.');
+        return;
+      }
+
+      rows = rows.map(row =>
+      Array.from(row).map( code =>
+        {
+          let tileKeyForCode = Object.keys(tiles).find(key => tiles[key].code === code);
+          if(tileKeyForCode) { return tiles[tileKeyForCode]; }
+          else { alert('Invalid tile code. Fix the input and try again.') }
+        }
+      ));
+
+      this.mapTiles = rows;
+      this.mapHeight = rows.length;
+      this.mapWidth = rows[0].length;
+      document.getElementById('mapHeight').value = this.mapHeight;
+      document.getElementById('mapWidth').value = this.mapWidthe;
+    },
+    generateMapCode(){
+      let mapCode = '';
+      for(let row of this.mapTiles){
+        for(let tile of row){
+          mapCode = mapCode.concat(tile.code);
+        }
+        mapCode = mapCode.concat('|')
+      }
+      mapCode = mapCode.slice(0, -1)
+      document.getElementById('mapCodeOutput').value = mapCode;
+      navigator.clipboard.writeText(mapCode);
+    }
+    /*setCtxMenuVisibility()
     {
       contextMenu.style.visibility = bCustomContextMenuShown ? 'visible' : 'hidden'
     } */
@@ -143,11 +197,22 @@ export default {
 td {
   width: 100px;
   height: 100px;
-  background: white;
+  /* background: white; */
+  box-sizing: border-box;
 }
 
 .empty{
+  background: white;
+  color:black;
+}
+.wall{
   background: red;
+}
+.hole{
+  background: #333;
+}
+.partialwall-right{
+  border-right: 10px solid orange;
 }
 
 #contextmenu{
@@ -169,5 +234,9 @@ td {
 }
 .ctxmenu-item:hover{
     background-color: #bbb;
+}
+
+.selected{
+  box-shadow: 0px 0px 3px 5px inset yellow;
 }
 </style>
