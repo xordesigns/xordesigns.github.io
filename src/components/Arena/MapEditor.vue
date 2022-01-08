@@ -5,10 +5,15 @@
         <tbody>
           <tr v-for="(row, rowIndex) in mapTiles" :key="rowIndex">
             <td v-for="(col, colIndex) of row" :key="colIndex"
-            :class="[col.baseClassName, col.partialClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
-            @click="selectTile($event, rowIndex, colIndex)"
+            :class="[col.baseClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
+            @click="tileClickCallback($event, rowIndex, colIndex)"
             @contextmenu="customRightClick($event, rowIndex, colIndex)"
-            :title="col.tooltip">{{String(rowIndex)+colIndex}}</td>
+            :title="col.tooltip">{{String(rowIndex)+colIndex}}
+              <div class="quadrant q-top" :class="col.partial.top" @click="setPartial($event, 'top', rowIndex, colIndex)"></div>
+              <div class="quadrant q-right" :class="col.partial.right" @click="setPartial($event, 'right', rowIndex, colIndex)"></div>
+              <div class="quadrant q-bot" :class="col.partial.bottom" @click="setPartial($event, 'bottom', rowIndex, colIndex)"></div>
+              <div class="quadrant q-left" :class="col.partial.left" @click="setPartial($event, 'left', rowIndex, colIndex)"></div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -31,13 +36,19 @@
       <br />
       <input readonly name="mapCodeOutput" id="mapCodeOutput">
       <button @click="generateMapCode()">Copy to clipboard</button>
+      <button @click="test()">Test</button>
 
       <div id="toolbox">
         <label for="paintMode">Select Mode</label>
-        <input type="checkbox" name="paintMode" id="paintMode">
+        <input type="checkbox" name="paintMode" id="paintMode" @change="togglePaintMode()">
         <label for="paintMode">Paint Mode</label>
+
         <select name="tileSelect" id="tileSelect">
           <option v-for="tile in Object.keys(tiles)" :key="tile" :value="tile">{{tile}} - {{tiles[tile].tooltip}}</option>
+        </select>
+
+        <select name="partialSelect" id="partialSelect">
+          <option v-for="partial in Object.keys(partials)" :key="partial" :value="partial">{{partial}} - {{partials[partial].tooltip}}</option>
         </select>
       </div>
 
@@ -73,25 +84,27 @@ export default {
     return {
       mapWidth: 5,
       mapHeight: 5,
-      tileSize: 100,
+      // tileSize: 100,
       mapTiles: [],
       selectedTiles: {},
-      bContextMenuShown: false,
       clickedRow: 0,
       clickedColumn: 0,
-      bSelectRightClickedTile: false
+      tileClickCallback: null,
+      bContextMenuShown: false,
+      bSelectRightClickedTile: false,
     };
   },
   created(){
-    this.tiles = tiles;
-    console.log(this.tiles)
+    this.tiles = Object.fromEntries(Object.entries(tiles).filter(kvp => !kvp[1].onlyPartial));
+    this.partials = Object.fromEntries(Object.entries(tiles).filter(kvp => kvp[1].canBePartial));
+    this.tileClickCallback = this.selectTile;
   },
   mounted()
   {
     for (let row = 0; row < this.mapHeight; row++) {
       this.mapTiles.push([])
       for(let col = 0; col < this.mapWidth; col++){
-        this.mapTiles[row].push(tiles.empty)
+        this.mapTiles[row].push({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" } })
       }
     }
 
@@ -103,6 +116,18 @@ export default {
     })
   },
   methods: {
+    test(){
+      this.mapTiles[0][0].partial.right = "wall"
+      console.log(this.mapTiles);
+    },
+    togglePaintMode(){
+      let bPaintModeEnabled = document.getElementById('paintMode').checked;
+      if(bPaintModeEnabled){
+        this.tileClickCallback = this.paintTile;
+      } else{
+        this.tileClickCallback = this.selectTile;
+      }
+    },    
     changeMapWidth(e){
       let newValue = +e.target.value;
       let diff = newValue - this.mapWidth;
@@ -115,7 +140,7 @@ export default {
         }
       }
       else if(diff > 0){
-        this.mapTiles = this.mapTiles.map(row => [...row, ...Array(diff).fill(tiles.empty)])
+        this.mapTiles = this.mapTiles.map(row => [...row, ...Array(diff).fill({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})])
       }
 
       this.mapWidth = newValue;
@@ -133,7 +158,11 @@ export default {
       }
       else if(diff > 0){
         for(let i = 0; i < diff; i++){
-          this.mapTiles.push(Array(this.mapWidth).fill(tiles.empty))
+          let newRow = [];
+          for(let j = 0; j< this.mapWidth; j++){
+            newRow.push({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})
+          }
+          this.mapTiles.push(newRow);
         }
       }
 
@@ -153,6 +182,12 @@ export default {
       }
       console.log(this.selectedTiles);
     },
+    paintTile(e, row, col){
+      let selectedTileType = document.getElementById('tileSelect').value;
+      console.log(selectedTileType);
+      //TODO don't overwrite partials?
+      this.mapTiles[row].splice(col, 1, {...tiles[selectedTileType], partial: { top: "", right:"", bottom:"", left:"" }})
+    },
     selectAll(){
       for (let row = 0; row < this.mapHeight; row++) {
         for (let col = 0; col < this.mapWidth; col++) {
@@ -164,6 +199,7 @@ export default {
       this.selectedTiles = {}
     },
     loadMapCode(){
+      //TODO better parsing to handle partial codes
       let input = document.getElementById('mapCodeInput').value;
       let rows = input.split('|');
 
@@ -198,6 +234,7 @@ export default {
       document.getElementById('mapWidth').value = this.mapWidth;
     },
     generateMapCode(){
+      //TODO generate partial codes
       let mapCode = '';
       for(let row of this.mapTiles){
         for(let tile of row){
@@ -283,6 +320,18 @@ export default {
           this.selectedTiles[`${tileCoordinates.row - 1}${tileCoordinates.col - 1}`] = true;
         }
       }
+    },
+    setPartial(e, dir, row, col){
+      console.log(`dir:${dir}row:${row}col:${col}`);
+      let bPaintModeEnabled = document.getElementById('paintMode').checked;
+      if(bPaintModeEnabled){
+        e.stopPropagation();
+        let selectedPartialType = document.getElementById('partialSelect').value;
+        console.log(selectedPartialType);
+        // console.log(this.mapTiles[row][col].partial)
+        //TODO toggle partials by default?
+        this.mapTiles[row][col].partial[dir] = selectedPartialType;
+      }
     }
   },
 };
@@ -304,11 +353,55 @@ export default {
     float:left;
 }
 
-td {
+td{
   width: 100px;
   height: 100px;
-  /* background: white; */
   box-sizing: border-box;
+  text-align: center;
+  position:relative;
+  cursor:pointer;
+}
+.quadrant{
+  position:absolute;
+  border-style: solid;
+  border-width: 0px;
+  border-color: transparent;
+}
+.q-top,.q-bot{
+  left:0;
+  width:100%;
+  height:20%;
+}
+.q-top{
+  top:0;
+  border-width: 0px 0px 1px 0px;
+}
+.q-bot{
+  bottom:0;
+  border-width: 1px 0px 0px 0px;
+}
+.q-left,.q-right{
+  top:0;
+  width:20%;
+  height:100%;
+}
+.q-left{
+  left:0;
+  border-width: 0px 1px 0px 0px;
+}
+.q-right{
+  right:0;
+  border-width: 0px 0px 0px 1px;
+}
+
+td:hover .quadrant{
+  border-color:#aaa;
+}
+
+.quadrant:hover{
+  background: yellow;
+  /* border-color:black; */
+  /* border-width:3px; */
 }
 
 .empty{
@@ -321,8 +414,17 @@ td {
 .hole{
   background: #333;
 }
-.partialwall-right{
-  border-right: 10px solid orange;
+.playerstart{
+  background: limegreen;
+}
+.pickup{
+  background: orange;
+}
+.barrier{
+  background: orange;
+}
+.hazard{
+  background: hotpink;
 }
 
 #contextmenu{
