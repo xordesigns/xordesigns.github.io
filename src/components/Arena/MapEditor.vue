@@ -1,4 +1,5 @@
 <!--features: move tiles (in select mode); copy/paste tiles; UI for row/column add/remove; hotkeys-->
+<!-- TODO tile rotation support - needed for diagonal walls and rotating partials -->
 <template>
   <div id="container">
     <div id="mapContainer">
@@ -200,7 +201,7 @@ export default {
       else if(diff > 0){
         for(let i = 0; i < diff; i++){
           let newRow = [];
-          for(let j = 0; j< this.mapWidth; j++){
+          for(let j = 0; j < this.mapWidth; j++){
             newRow.push({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})
           }
           this.mapTiles.push(newRow);
@@ -382,7 +383,36 @@ export default {
         this.deselectAll();
       }
     },
-    //TODO insert row/column methods
+    insertRow(insertBelow){
+      if(this.mapHeight == 9){
+        return;
+      }
+
+      let newRow = [];
+      for(let i = 0; i < this.mapWidth; i++){
+        newRow.push({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})
+      }
+
+      let rowIndex = insertBelow ? this.clickedRow + 1 : this.clickedRow;
+
+      this.mapTiles.splice(rowIndex, 0, newRow);
+      this.mapHeight++;
+      document.getElementById('mapHeight').value = this.mapHeight;
+    },
+    insertColumn(insertRight){
+      if(this.mapWidth == 9){
+        return;
+      }
+
+      let colIndex = insertRight ? this.clickedColumn + 1 : this.clickedColumn;
+
+      for(let row of this.mapTiles){
+        row.splice(colIndex, 0, {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})
+      }
+
+      this.mapWidth++;
+      document.getElementById('mapWidth').value = this.mapWidth;
+    }
   },
 };
 </script>
