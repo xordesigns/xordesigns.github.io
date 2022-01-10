@@ -1,3 +1,4 @@
+<!--features: move tiles (in select mode); copy/paste tiles; UI for row/column add/remove; hotkeys-->
 <template>
   <div id="container">
     <div id="mapContainer">
@@ -44,7 +45,7 @@
         <label for="paintMode">Paint Mode</label>
 
         <select name="tileSelect" id="tileSelect">
-          <option v-for="tile in Object.keys(tiles)" :key="tile" :value="tile">{{tile}} - {{tiles[tile].tooltip}}</option>
+          <option v-for="tile in Object.keys(fullTiles)" :key="tile" :value="tile">{{tile}} - {{fullTiles[tile].tooltip}}</option>
         </select>
 
         <select name="partialSelect" id="partialSelect">
@@ -55,17 +56,52 @@
     </div>
 
     <div id="contextmenu" v-show="bContextMenuShown">
-      <ul>
+      <ul id="menu">
         <li class="ctxmenu-item" @click="selectAll()">Select All</li>
         <li class="ctxmenu-item" @click="deselectAll()">Deselect All</li>
         <hr>
-        <li class="ctxmenu-item" @click="selectRow()">Select Row</li>
-        <li class="ctxmenu-item" @click="selectColumn()">Select Column</li>
-        <li class="ctxmenu-item" @click="selectAdjacent(true)">Select Adjacent</li>
-        <li class="ctxmenu-item" @click="selectAdjacent(false)">Select Adjacent (Ortho)</li>
-        <li class="ctxmenu-item" @click="$event.stopPropagation(); bSelectRightClickedTile = !bSelectRightClickedTile">
-          <input type="checkbox" name="selectRightClickedTile" id="selectRightClickedTile" v-model="bSelectRightClickedTile">
-          <label>Select right-clicked tile</label>
+        <li class="ctxmenu-item">
+          <span>Select ►</span>
+          <ul class="submenu">
+            <li class="ctxmenu-item" @click="selectRow()">Row</li>
+            <li class="ctxmenu-item" @click="selectColumn()">Column</li>
+            <li class="ctxmenu-item" @click="selectAdjacent(true)">Adjacent</li>
+            <li class="ctxmenu-item" @click="selectAdjacent(false)">Adjacent (Ortho)</li>
+            <hr>
+            <li class="ctxmenu-item" @click="$event.stopPropagation(); bSelectRightClickedTile = !bSelectRightClickedTile">
+              <input type="checkbox" name="selectRightClickedTile" id="selectRightClickedTile" v-model="bSelectRightClickedTile">
+              <label>Select right-clicked tile</label>
+            </li>
+          </ul>
+        </li>
+        <hr>
+        <li class="ctxmenu-item">
+          <span>Set selected ►</span>
+          <ul class="submenu">
+            <li class="ctxmenu-item" v-for="tile in Object.keys(fullTiles)" :key="tile" @click="setSelected(tile)">{{tile}}</li>
+            <hr>
+            <li class="ctxmenu-item" @click="$event.stopPropagation(); bDeselectAfterSet = !bDeselectAfterSet">
+              <input type="checkbox" name="deselectAfterSet" id="deselectAfterSet" v-model="bDeselectAfterSet">
+              <label>Deselect tiles after setting</label>
+            </li>
+          </ul>
+        </li>
+        <li class="ctxmenu-item">
+          <!--TODO finish (nested submenus? i.e. set>top>hole) -->
+          <span>Set selected partial ►</span>
+          <ul class="submenu">
+            <li class="ctxmenu-item" v-for="tile in Object.keys(partials)" :key="tile">{{tile}}</li>
+          </ul>
+        </li>
+        <hr>
+        <li class="ctxmenu-item">
+          <span>Insert ►</span>
+          <ul class="submenu">
+            <li class="ctxmenu-item" @click="insertRow(false)">Row Above</li>
+            <li class="ctxmenu-item" @click="insertRow(true)">Row Below</li>
+            <li class="ctxmenu-item" @click="insertColumn(false)">Column Left</li>
+            <li class="ctxmenu-item" @click="insertColumn(true)">Column Right</li>
+          </ul>
         </li>
         <hr>
         <li class="ctxmenu-item" @click="deleteRow()">Delete Row</li>
@@ -92,10 +128,11 @@ export default {
       tileClickCallback: null,
       bContextMenuShown: false,
       bSelectRightClickedTile: false,
+      bDeselectAfterSet: true,
     };
   },
   created(){
-    this.tiles = Object.fromEntries(Object.entries(tiles).filter(kvp => !kvp[1].onlyPartial));
+    this.fullTiles = Object.fromEntries(Object.entries(tiles).filter(kvp => !kvp[1].onlyPartial));
     this.partials = Object.fromEntries(Object.entries(tiles).filter(kvp => kvp[1].canBePartial));
     this.tileClickCallback = this.selectTile;
   },
@@ -140,7 +177,11 @@ export default {
         }
       }
       else if(diff > 0){
-        this.mapTiles = this.mapTiles.map(row => [...row, ...Array(diff).fill({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})])
+        for(let row = 0; row < this.mapHeight; row++){
+          for(let i = 0; i < diff; i++){
+            this.mapTiles[row].push({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})
+          }
+        }
       }
 
       this.mapWidth = newValue;
@@ -328,11 +369,20 @@ export default {
         e.stopPropagation();
         let selectedPartialType = document.getElementById('partialSelect').value;
         console.log(selectedPartialType);
-        // console.log(this.mapTiles[row][col].partial)
         //TODO toggle partials by default?
         this.mapTiles[row][col].partial[dir] = selectedPartialType;
       }
-    }
+    },
+    setSelected(tileType){
+      for(let index of Object.keys(this.selectedTiles)){
+        // console.log(`${index[0]}:${index[1]} - ${tileType}`);
+        this.mapTiles[index[0]].splice(index[1], 1, {...tiles[tileType], partial: { top: "", right:"", bottom:"", left:"" }})
+      }
+      if(this.bDeselectAfterSet){
+        this.deselectAll();
+      }
+    },
+    //TODO insert row/column methods
   },
 };
 </script>
@@ -433,7 +483,7 @@ td:hover .quadrant{
   position: absolute;
   /* visibility: hidden; */
 }
-#contextmenu ul{
+ul{
     list-style-type: none;
     padding: 0;
     margin: 0;
@@ -443,9 +493,21 @@ td:hover .quadrant{
     background-color: #999;
     border: 1px solid black;
     cursor:pointer;
+    position:relative;
+}
+.submenu{
+  position:absolute;
+  top:0;  
+  left:100%;
+  visibility:hidden;
+  width:100%;
 }
 .ctxmenu-item:hover{
     background-color: #bbb;
+}
+.ctxmenu-item:hover .submenu{
+  visibility:visible;
+  background-color: #bbb;
 }
 ul hr{
   margin: 0;
