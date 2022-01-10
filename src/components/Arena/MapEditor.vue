@@ -11,10 +11,10 @@
             @click="tileClickCallback($event, rowIndex, colIndex)"
             @contextmenu="customRightClick($event, rowIndex, colIndex)"
             :title="col.tooltip">{{String(rowIndex)+colIndex}}
-              <div class="quadrant q-top" :class="col.partial.top" @click="setPartial($event, 'top', rowIndex, colIndex)"></div>
-              <div class="quadrant q-right" :class="col.partial.right" @click="setPartial($event, 'right', rowIndex, colIndex)"></div>
-              <div class="quadrant q-bot" :class="col.partial.bottom" @click="setPartial($event, 'bottom', rowIndex, colIndex)"></div>
-              <div class="quadrant q-left" :class="col.partial.left" @click="setPartial($event, 'left', rowIndex, colIndex)"></div>
+              <div class="quadrant q-top" :class="col.partial.top" @click="paintPartial($event, 'top', rowIndex, colIndex)"></div>
+              <div class="quadrant q-right" :class="col.partial.right" @click="paintPartial($event, 'right', rowIndex, colIndex)"></div>
+              <div class="quadrant q-bot" :class="col.partial.bottom" @click="paintPartial($event, 'bottom', rowIndex, colIndex)"></div>
+              <div class="quadrant q-left" :class="col.partial.left" @click="paintPartial($event, 'left', rowIndex, colIndex)"></div>
             </td>
           </tr>
         </tbody>
@@ -44,6 +44,10 @@
         <label for="paintMode">Select Mode</label>
         <input type="checkbox" name="paintMode" id="paintMode" @change="togglePaintMode()">
         <label for="paintMode">Paint Mode</label>
+
+        <br>
+        <label for="overwritePartials">Overwrite partials when setting a tile?</label>
+        <input type="checkbox" name="overwritePartials" id="overwritePartials" v-model="bOverwritePartials">
 
         <select name="tileSelect" id="tileSelect">
           <option v-for="tile in Object.keys(fullTiles)" :key="tile" :value="tile">{{tile}} - {{fullTiles[tile].tooltip}}</option>
@@ -80,19 +84,22 @@
           <span>Set selected ►</span>
           <ul class="submenu">
             <li class="ctxmenu-item" v-for="tile in Object.keys(fullTiles)" :key="tile" @click="setSelected(tile)">{{tile}}</li>
-            <hr>
-            <li class="ctxmenu-item" @click="$event.stopPropagation(); bDeselectAfterSet = !bDeselectAfterSet">
-              <input type="checkbox" name="deselectAfterSet" id="deselectAfterSet" v-model="bDeselectAfterSet">
-              <label>Deselect tiles after setting</label>
-            </li>
           </ul>
         </li>
         <li class="ctxmenu-item">
-          <!--TODO finish (nested submenus? i.e. set>top>hole) -->
           <span>Set selected partial ►</span>
           <ul class="submenu">
-            <li class="ctxmenu-item" v-for="tile in Object.keys(partials)" :key="tile">{{tile}}</li>
+            <li class="ctxmenu-item" v-for="dir in ['top','bottom','right','left', 'all']" :key="dir">{{dir}} ►
+              <ul class="submenu">
+                <li class="ctxmenu-item" @click="setSelectedPartial(dir, 'tile')">empty</li>
+                <li class="ctxmenu-item" v-for="tile in Object.keys(partials)" :key="tile" @click="setSelectedPartial(dir, tile)">{{tile}}</li>
+              </ul>
+            </li>
           </ul>
+        </li>
+        <li class="ctxmenu-item" @click="$event.stopPropagation(); bDeselectAfterSet = !bDeselectAfterSet">
+              <input type="checkbox" name="deselectAfterSet" id="deselectAfterSet" v-model="bDeselectAfterSet">
+              <label>Deselect tiles after setting</label>
         </li>
         <hr>
         <li class="ctxmenu-item">
@@ -128,8 +135,9 @@ export default {
       clickedColumn: 0,
       tileClickCallback: null,
       bContextMenuShown: false,
-      bSelectRightClickedTile: false,
+      bSelectRightClickedTile: true,
       bDeselectAfterSet: true,
+      bOverwritePartials: false,
     };
   },
   created(){
@@ -227,8 +235,26 @@ export default {
     paintTile(e, row, col){
       let selectedTileType = document.getElementById('tileSelect').value;
       console.log(selectedTileType);
-      //TODO don't overwrite partials?
-      this.mapTiles[row].splice(col, 1, {...tiles[selectedTileType], partial: { top: "", right:"", bottom:"", left:"" }})
+      if(this.bOverwritePartials){
+        this.mapTiles[row].splice(col, 1, {...tiles[selectedTileType], partial: { top: "", right:"", bottom:"", left:"" }})
+      } else {
+        this.mapTiles[row].splice(col, 1, {...tiles[selectedTileType], partial: {...this.mapTiles[row][col].partial}})
+      }
+    },
+    paintPartial(e, dir, row, col){
+      console.log(`dir:${dir}row:${row}col:${col}`);
+      let bPaintModeEnabled = document.getElementById('paintMode').checked;
+      if(bPaintModeEnabled){
+        e.stopPropagation();
+        let selectedPartialType = document.getElementById('partialSelect').value;
+        let currentPartial = this.mapTiles[row][col].partial[dir];
+        if(currentPartial === selectedPartialType){
+          this.mapTiles[row][col].partial[dir] = '';
+        }
+        else{
+          this.mapTiles[row][col].partial[dir] = selectedPartialType;
+        }
+      }
     },
     selectAll(){
       for (let row = 0; row < this.mapHeight; row++) {
@@ -363,21 +389,36 @@ export default {
         }
       }
     },
-    setPartial(e, dir, row, col){
-      console.log(`dir:${dir}row:${row}col:${col}`);
-      let bPaintModeEnabled = document.getElementById('paintMode').checked;
-      if(bPaintModeEnabled){
-        e.stopPropagation();
-        let selectedPartialType = document.getElementById('partialSelect').value;
-        console.log(selectedPartialType);
-        //TODO toggle partials by default?
-        this.mapTiles[row][col].partial[dir] = selectedPartialType;
-      }
-    },
     setSelected(tileType){
       for(let index of Object.keys(this.selectedTiles)){
-        // console.log(`${index[0]}:${index[1]} - ${tileType}`);
-        this.mapTiles[index[0]].splice(index[1], 1, {...tiles[tileType], partial: { top: "", right:"", bottom:"", left:"" }})
+        let row = index[0];
+        let col = index[1];
+        if(this.bOverwritePartials){
+          this.mapTiles[row].splice(col, 1, {...tiles[tileType], partial: { top: "", right:"", bottom:"", left:"" }})
+        } else {
+        this.mapTiles[row].splice(col, 1, {...tiles[tileType], partial: {...this.mapTiles[row][col].partial}})
+        }
+      }
+      if(this.bDeselectAfterSet){
+        this.deselectAll();
+      }
+    },
+    setSelectedPartial(dir, partialType){
+      if(dir === 'all'){
+        for(let dir of ['top','left','bottom','right']){
+            for(let index of Object.keys(this.selectedTiles)){
+            let row = index[0];
+            let col = index[1];
+            this.mapTiles[row][col].partial[dir] = partialType;
+          }
+        }
+        return;
+      } else{
+        for(let index of Object.keys(this.selectedTiles)){
+          let row = index[0];
+          let col = index[1];
+          this.mapTiles[row][col].partial[dir] = partialType;
+        }
       }
       if(this.bDeselectAfterSet){
         this.deselectAll();
@@ -535,7 +576,7 @@ ul{
 .ctxmenu-item:hover{
     background-color: #bbb;
 }
-.ctxmenu-item:hover .submenu{
+.ctxmenu-item:hover > .submenu{
   visibility:visible;
   background-color: #bbb;
 }
