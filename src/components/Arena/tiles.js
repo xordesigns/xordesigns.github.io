@@ -4,35 +4,43 @@ export const tiles = {
         code: "E",
         tooltip: "Empty tile. Players can move and shoot through freely.",
         canBePartial: false,
-        onlyPartial: false
+        onlyPartial: false,
     },
     wall: {
         baseClassName: "wall",
         code: "W",
         tooltip: "Wall. Players can't move on nor shoot through it.",
         canBePartial: true,
-        onlyPartial: false
+        onlyPartial: false,
     },
     hole: {
         baseClassName: "hole",
         code: "H",
         tooltip: "Hole. Players can't move on it, but can shoot through it.",
         canBePartial: true,
-        onlyPartial: false
+        onlyPartial: false,
+    },
+    diagonalwall: {
+        baseClassName: "diagonalwall",
+        code: "D",
+        tooltip: "Diagonal wall. Redirects incoming shots.",
+        canBePartial: false,
+        onlyPartial: false,
+        direction: "top"
     },
     pickup: {
         baseClassName: "pickup",
         code: "X",
         tooltip: "Energy pickup. Other pickups respawn when the last one is picked up.",
         canBePartial: false,
-        onlyPartial: false
+        onlyPartial: false,
     },
     playerstart: {
         baseClassName: "playerstart",
         code: "S",
         tooltip: "Recommended player start location.",
         canBePartial: false,
-        onlyPartial: false
+        onlyPartial: false,
     },
     barrier: {
         baseClassName: "barrier",

@@ -1,5 +1,4 @@
 <!--features: move tiles (in select mode); copy/paste tiles; UI for row/column add/remove; hotkeys-->
-<!-- TODO tile rotation support - needed for diagonal walls and rotating partials -->
 <template>
   <div id="container">
     <div id="mapContainer">
@@ -7,7 +6,7 @@
         <tbody>
           <tr v-for="(row, rowIndex) in mapTiles" :key="rowIndex">
             <td v-for="(col, colIndex) of row" :key="colIndex"
-            :class="[col.baseClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
+            :class="[col.direction ? `${col.baseClassName}-${col.direction}` : col.baseClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
             @click="tileClickCallback($event, rowIndex, colIndex)"
             @contextmenu="customRightClick($event, rowIndex, colIndex)"
             :title="col.tooltip">{{String(rowIndex)+colIndex}}
@@ -103,6 +102,19 @@
         </li>
         <hr>
         <li class="ctxmenu-item">
+          <span>Rotate ►</span>
+          <ul class="submenu">
+            <li class="ctxmenu-item" @click="rotateSelected(true)">Clockwise</li>
+            <li class="ctxmenu-item" @click="rotateSelected(false)">Counterclockwise</li>
+            <hr>
+            <li class="ctxmenu-item" @click="$event.stopPropagation(); bRotatePartials = !bRotatePartials">
+              <input type="checkbox" name="rotatePartials" id="rotatePartials" v-model="bRotatePartials">
+              <label>Rotate partial tiles</label>
+            </li>
+          </ul>
+        </li>
+        <hr>
+        <li class="ctxmenu-item">
           <span>Insert ►</span>
           <ul class="submenu">
             <li class="ctxmenu-item" @click="insertRow(false)">Row Above</li>
@@ -138,6 +150,7 @@ export default {
       bSelectRightClickedTile: true,
       bDeselectAfterSet: true,
       bOverwritePartials: false,
+      bRotatePartials: true
     };
   },
   created(){
@@ -164,7 +177,10 @@ export default {
   methods: {
     test(){
       this.mapTiles[0][0].partial.right = "wall"
-      console.log(this.mapTiles);
+      this.mapTiles[0][0].partial.top = "hole"
+      this.mapTiles[0][0].partial.bottom = "barrier"
+      this.mapTiles[0][0].partial.left = "hazard"
+      // console.log(this.mapTiles);
     },
     togglePaintMode(){
       let bPaintModeEnabled = document.getElementById('paintMode').checked;
@@ -230,7 +246,7 @@ export default {
       {
         this.selectedTiles[tileIndex] = true
       }
-      console.log(this.selectedTiles);
+      // console.log(this.selectedTiles);
     },
     paintTile(e, row, col){
       let selectedTileType = document.getElementById('tileSelect').value;
@@ -242,7 +258,7 @@ export default {
       }
     },
     paintPartial(e, dir, row, col){
-      console.log(`dir:${dir}row:${row}col:${col}`);
+      // console.log(`dir:${dir}row:${row}col:${col}`);
       let bPaintModeEnabled = document.getElementById('paintMode').checked;
       if(bPaintModeEnabled){
         e.stopPropagation();
@@ -326,7 +342,7 @@ export default {
         
         if(this.bSelectRightClickedTile){
           this.selectedTiles[`${row}${col}`] = true;
-          console.log(this.selectedTiles);
+          // console.log(this.selectedTiles);
         }
     },
     deleteRow(){
@@ -453,6 +469,25 @@ export default {
 
       this.mapWidth++;
       document.getElementById('mapWidth').value = this.mapWidth;
+    },
+    rotateSelected(clockwise){
+      for(let index of Object.keys(this.selectedTiles)){
+        let row = index[0];
+        let col = index[1];
+        let dirs = ['top','right','bottom','left']
+        let rotateDirection = clockwise ? 1 : -1;
+        let tile = this.mapTiles[row][col]
+        if(tile.direction){
+          let index = dirs.indexOf(tile.direction) + rotateDirection;
+          tile.direction = dirs.at(index % dirs.length)
+        }
+        if(this.bRotatePartials){
+          let partialsCopy = Object.values(tile.partial)
+          for(let i = 0; i < 4; i++){
+            tile.partial[dirs[i]] = partialsCopy.at((i - rotateDirection) % dirs.length)
+          }
+        }
+      }
     }
   },
 };
@@ -530,22 +565,34 @@ td:hover .quadrant{
   color:black;
 }
 .wall{
-  background: red;
+  background: #ff0000;
 }
 .hole{
   background: #333;
 }
+.diagonalwall-top{
+  background: linear-gradient(315deg, rgba(255,255,255,1) 50%, rgba(255,0,0,1) 51%);
+}
+.diagonalwall-right{
+  background: linear-gradient(45deg, rgba(255,255,255,1) 50%, rgba(255,0,0,1) 51%);
+}
+.diagonalwall-bottom{
+  background: linear-gradient(135deg, rgba(255,255,255,1) 50%, rgba(255,0,0,1) 51%);
+}
+.diagonalwall-left{
+  background: linear-gradient(225deg, rgba(255,255,255,1) 50%, rgba(255,0,0,1) 51%);
+}
 .playerstart{
-  background: limegreen;
+  background: radial-gradient(circle, rgba(50,205,50,1) 34%, rgba(255,255,255,1) 35%);
 }
 .pickup{
-  background: orange;
+  background: radial-gradient(circle, rgba(255,165,0,1) 34%, rgba(255,255,255,1) 35%);
 }
 .barrier{
   background: orange;
 }
 .hazard{
-  background: hotpink;
+  background: cyan;
 }
 
 #contextmenu{
