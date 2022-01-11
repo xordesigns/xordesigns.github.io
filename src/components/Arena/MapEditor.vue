@@ -635,7 +635,14 @@ ul hr{
   height: 3px;
 }
 
-.selected{
+.selected::after{
+  content:'';
+  width: 100px;
+  height:100px;
   box-shadow: 0px 0px 3px 5px inset yellow;
+  display:block;
+  position:absolute;
+  top:0;
+  left:0;
 }
 </style>
