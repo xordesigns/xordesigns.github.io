@@ -8,6 +8,8 @@
             <td v-for="(col, colIndex) of row" :key="colIndex"
             :class="[col.direction ? `${col.baseClassName}-${col.direction}` : col.baseClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
             @click="tileClickCallback($event, rowIndex, colIndex)"
+            @mousedown="clearTile($event, rowIndex, colIndex)"
+            @mouseenter="setTileOnHover($event, rowIndex, colIndex)"
             @contextmenu="customRightClick($event, rowIndex, colIndex)"
             :title="col.tooltip">{{String(rowIndex)+colIndex}}
               <div class="quadrant q-top" :class="col.partial.top" @click="paintPartial($event, 'top', rowIndex, colIndex)"></div>
@@ -41,7 +43,7 @@
 
       <div id="toolbox">
         <label for="paintMode">Select Mode</label>
-        <input type="checkbox" name="paintMode" id="paintMode" @change="togglePaintMode()">
+        <input type="checkbox" checked name="paintMode" id="paintMode" @change="togglePaintMode()">
         <label for="paintMode">Paint Mode</label>
 
         <br>
@@ -111,6 +113,10 @@
               <input type="checkbox" name="rotatePartials" id="rotatePartials" v-model="bRotatePartials">
               <label>Rotate partial tiles</label>
             </li>
+            <li class="ctxmenu-item" @click="$event.stopPropagation(); bDeselectAfterRotate = !bDeselectAfterRotate">
+              <input type="checkbox" name="deselectAfterRotate" id="deselectAfterRotate" v-model="bDeselectAfterRotate">
+              <label>Deselect after rotation</label>
+            </li>
           </ul>
         </li>
         <hr>
@@ -145,18 +151,21 @@ export default {
       selectedTiles: {},
       clickedRow: 0,
       clickedColumn: 0,
+      hoveredRow: 0,
+      hoveredColumn: 0,
       tileClickCallback: null,
       bContextMenuShown: false,
       bSelectRightClickedTile: true,
       bDeselectAfterSet: true,
+      bDeselectAfterRotate: true,
       bOverwritePartials: false,
-      bRotatePartials: true
+      bRotatePartials: true,
     };
   },
   created(){
     this.fullTiles = Object.fromEntries(Object.entries(tiles).filter(kvp => !kvp[1].onlyPartial));
     this.partials = Object.fromEntries(Object.entries(tiles).filter(kvp => kvp[1].canBePartial));
-    this.tileClickCallback = this.selectTile;
+    this.tileClickCallback = this.paintTile;
   },
   mounted()
   {
@@ -487,6 +496,19 @@ export default {
             tile.partial[dirs[i]] = partialsCopy.at((i - rotateDirection) % dirs.length)
           }
         }
+      }
+      if(this.bDeselectAfterRotate){
+        this.deselectAll();
+      }
+    },
+    setTileOnHover(e, row, col){
+      this.hoveredRow = row;
+      this.hoveredCol = col;
+    },
+    clearTile(e, row, col){
+      if(e.button == 1){
+        e.preventDefault();
+        this.mapTiles[row][col] = {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }}
       }
     }
   },
