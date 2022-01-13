@@ -69,8 +69,8 @@
         <li class="ctxmenu-item">
           <span>Select ►</span>
           <ul class="submenu">
-            <li class="ctxmenu-item" @click="selectRow()">Row</li>
-            <li class="ctxmenu-item" @click="selectColumn()">Column</li>
+            <li class="ctxmenu-item" @click="selectRow(clickedRow)">Row</li>
+            <li class="ctxmenu-item" @click="selectColumn(clickedColumn)">Column</li>
             <li class="ctxmenu-item" @click="selectAdjacent(true)">Adjacent</li>
             <li class="ctxmenu-item" @click="selectAdjacent(false)">Adjacent (Ortho)</li>
             <hr>
@@ -123,15 +123,15 @@
         <li class="ctxmenu-item">
           <span>Insert ►</span>
           <ul class="submenu">
-            <li class="ctxmenu-item" @click="insertRow(false)">Row Above</li>
-            <li class="ctxmenu-item" @click="insertRow(true)">Row Below</li>
-            <li class="ctxmenu-item" @click="insertColumn(false)">Column Left</li>
-            <li class="ctxmenu-item" @click="insertColumn(true)">Column Right</li>
+            <li class="ctxmenu-item" @click="insertRow(clickedRow, false)">Row Above</li>
+            <li class="ctxmenu-item" @click="insertRow(clickedRow, true)">Row Below</li>
+            <li class="ctxmenu-item" @click="insertColumn(clickedColumn, false)">Column Left</li>
+            <li class="ctxmenu-item" @click="insertColumn(clickedColumn, true)">Column Right</li>
           </ul>
         </li>
         <hr>
-        <li class="ctxmenu-item" @click="deleteRow()">Delete Row</li>
-        <li class="ctxmenu-item" @click="deleteColumn()">Delete Column</li>
+        <li class="ctxmenu-item" @click="deleteRow(clickedRow)">Delete Row</li>
+        <li class="ctxmenu-item" @click="deleteColumn(clickedColumn)">Delete Column</li>
 
       </ul>
     </div>
@@ -200,12 +200,70 @@ export default {
           this.pasteTile(this.hoveredRow, this.hoveredColumn);
           break;
         case 'KeyQ':
+          if(e.shiftKey){
+            this.rotateSelected(false);
+          }else{
+            this.rotateTile(this.hoveredRow, this.hoveredColumn, false);
+          }
           break;
         case 'KeyE':
+          if(e.shiftKey){
+            this.rotateSelected(false);
+          }else{
+            this.rotateTile(this.hoveredRow, this.hoveredColumn, true);
+          }
           break;
         case 'KeyD':
-        case 'Delete':
-          this.clearTile(this.hoveredRow, this.hoveredColumn);
+          case 'Delete':
+            if(e.shiftKey){
+              this.clearSelected()
+            }
+            else{
+              this.clearTile(this.hoveredRow, this.hoveredColumn);
+            }
+          break;
+        case 'ArrowUp':
+          if(e.altKey){
+            this.deleteRow(this.hoveredRow - 1)
+          }
+          else if(e.shiftKey){
+            this.selectColumn(this.hoveredColumn);
+          }
+          else{
+            this.insertRow(this.hoveredRow, false);
+          }
+          break;
+        case 'ArrowDown':
+          if(e.altKey){
+            this.deleteRow(this.hoveredRow + 1)
+          }
+          else if(e.shiftKey){
+            this.selectColumn(this.hoveredColumn);
+          }else{
+            this.insertRow(this.hoveredRow, true);
+          }
+          break;
+        case 'ArrowLeft':
+          if(e.altKey){
+            e.preventDefault();
+            this.deleteColumn(this.hoveredColumn - 1)
+          }
+          else if(e.shiftKey){
+            this.selectRow(this.hoveredRow);
+          }else{
+            this.insertColumn(this.hoveredColumn, false);
+          }
+          break;
+        case 'ArrowRight':
+          if(e.altKey){
+            e.preventDefault();
+            this.deleteColumn(this.hoveredColumn + 1)
+          }
+          else if(e.shiftKey){
+            this.selectRow(this.hoveredRow);
+          }else{
+            this.insertColumn(this.hoveredColumn, true);
+          }
           break;
       }
     })
@@ -218,6 +276,7 @@ export default {
         this.tileClickCallback = this.selectTile;
       }
     }
+    //TODO add watchers for map width/height to set the HTML sliders properly?
   },
   methods: {
     test(){
@@ -382,35 +441,43 @@ export default {
           // console.log(this.selectedTiles);
         }
     },
-    deleteRow(){
+    deleteRow(row){
+      if(row < 0 || row >= this.mapHeight){
+        console.log("out of bounds");
+        return;
+      }
       if(this.mapHeight > 3){
-        this.mapTiles.splice(this.clickedRow, 1)
+        this.mapTiles.splice(row, 1)
         this.mapHeight--;
         for(let i = 0; i < this.mapWidth; i++){
-            delete this.selectedTiles[`${this.clickedRow}${i}`]
+            delete this.selectedTiles[`${row}${i}`]
         }
         document.getElementById('mapHeight').value = this.mapHeight;
       }
     },
-    deleteColumn(){
+    deleteColumn(col){
+      if(col < 0 || col >= this.mapWidth){
+        console.log("out of bounds");
+        return;
+      }
       if(this.mapWidth > 3){
-        this.mapTiles.forEach(row => row.splice(this.clickedColumn, 1))
+        this.mapTiles.forEach(row => row.splice(col, 1))
         this.mapWidth--;
         for(let i = 0; i < this.mapHeight; i++){
-            delete this.selectedTiles[`${i}${this.clickedColumn}`]
+            delete this.selectedTiles[`${i}${col}`]
             console.log(this.selectedTiles);
         }
         document.getElementById('mapWidth').value = this.mapWidth;
       }
     },
-    selectRow(){
+    selectRow(row){
       for (let i = 0; i < this.mapWidth; i++) {
-        this.selectedTiles[`${this.clickedRow}${i}`] = true;
+        this.selectedTiles[`${row}${i}`] = true;
       }
     },
-    selectColumn(){
+    selectColumn(col){
       for (let i = 0; i < this.mapHeight; i++) {
-        this.selectedTiles[`${i}${this.clickedColumn}`] = true;
+        this.selectedTiles[`${i}${col}`] = true;
       }
     },
     selectAdjacent(diagonals){
@@ -477,7 +544,7 @@ export default {
         this.deselectAll();
       }
     },
-    insertRow(insertBelow){
+    insertRow(row, insertBelow){
       if(this.mapHeight == 9){
         return;
       }
@@ -487,18 +554,18 @@ export default {
         newRow.push({...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})
       }
 
-      let rowIndex = insertBelow ? this.clickedRow + 1 : this.clickedRow;
+      let rowIndex = insertBelow ? row + 1 : row;
 
       this.mapTiles.splice(rowIndex, 0, newRow);
       this.mapHeight++;
       document.getElementById('mapHeight').value = this.mapHeight;
     },
-    insertColumn(insertRight){
+    insertColumn(col, insertRight){
       if(this.mapWidth == 9){
         return;
       }
 
-      let colIndex = insertRight ? this.clickedColumn + 1 : this.clickedColumn;
+      let colIndex = insertRight ? col + 1 : col  ;
 
       for(let row of this.mapTiles){
         row.splice(colIndex, 0, {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }})
@@ -511,22 +578,25 @@ export default {
       for(let index of Object.keys(this.selectedTiles)){
         let row = index[0];
         let col = index[1];
-        let dirs = ['top','right','bottom','left']
-        let rotateDirection = clockwise ? 1 : -1;
-        let tile = this.mapTiles[row][col]
-        if(tile.direction){
-          let index = dirs.indexOf(tile.direction) + rotateDirection;
-          tile.direction = dirs.at(index % dirs.length)
-        }
-        if(this.bRotatePartials){
-          let partialsCopy = Object.values(tile.partial)
-          for(let i = 0; i < 4; i++){
-            tile.partial[dirs[i]] = partialsCopy.at((i - rotateDirection) % dirs.length)
-          }
-        }
+        this.rotateTile(row, col, clockwise)
       }
       if(this.bDeselectAfterRotate){
         this.deselectAll();
+      }
+    },
+    rotateTile(row, col, clockwise){
+      let dirs = ['top','right','bottom','left']
+      let rotateDirection = clockwise ? 1 : -1;
+      let tile = this.mapTiles[row][col]
+      if(tile.direction){
+        let index = dirs.indexOf(tile.direction) + rotateDirection;
+        tile.direction = dirs.at(index % dirs.length)
+      }
+      if(this.bRotatePartials){
+        let partialsCopy = Object.values(tile.partial)
+        for(let i = 0; i < 4; i++){
+          tile.partial[dirs[i]] = partialsCopy.at((i - rotateDirection) % dirs.length)
+        }
       }
     },
     setTileOnHover(e, row, col){
@@ -541,6 +611,13 @@ export default {
     },
     clearTile(row, col){
       this.mapTiles[row][col] = {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }}
+    },
+    clearSelected(){
+      for(let index of Object.keys(this.selectedTiles)){
+        let row = index[0];
+        let col = index[1];
+        this.clearTile(row, col);
+      }
     },
     copyTile(row, col){
       this.copiedTile = {...this.mapTiles[row][col]};
