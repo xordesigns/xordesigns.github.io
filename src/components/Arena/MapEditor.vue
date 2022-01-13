@@ -8,7 +8,7 @@
             <td v-for="(col, colIndex) of row" :key="colIndex"
             :class="[col.direction ? `${col.baseClassName}-${col.direction}` : col.baseClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
             @click="tileClickCallback($event, rowIndex, colIndex)"
-            @mousedown="clearTile($event, rowIndex, colIndex)"
+            @mousedown="handleAuxMouseButtons($event, rowIndex, colIndex)"
             @mouseenter="setTileOnHover($event, rowIndex, colIndex)"
             @contextmenu="customRightClick($event, rowIndex, colIndex)"
             :title="col.tooltip">{{String(rowIndex)+colIndex}}
@@ -43,7 +43,7 @@
 
       <div id="toolbox">
         <label for="paintMode">Select Mode</label>
-        <input type="checkbox" checked name="paintMode" id="paintMode" @change="togglePaintMode()">
+        <input type="checkbox" name="paintMode" id="paintMode" v-model="bPaintModeEnabled">
         <label for="paintMode">Paint Mode</label>
 
         <br>
@@ -149,11 +149,13 @@ export default {
       // tileSize: 100,
       mapTiles: [],
       selectedTiles: {},
+      copiedTile: {},
       clickedRow: 0,
       clickedColumn: 0,
       hoveredRow: 0,
       hoveredColumn: 0,
       tileClickCallback: null,
+      bPaintModeEnabled: true,
       bContextMenuShown: false,
       bSelectRightClickedTile: true,
       bDeselectAfterSet: true,
@@ -181,7 +183,41 @@ export default {
           e.preventDefault()
           this.bContextMenuShown = false
       }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      console.log(e.code)
+      switch(e.code){
+        // TODO finish keybinds
+        case 'Space':
+          e.preventDefault();
+          this.bPaintModeEnabled = !this.bPaintModeEnabled;
+          break;
+        case 'KeyC':
+          this.copyTile(this.hoveredRow, this.hoveredColumn);
+          break;
+        case 'KeyV':
+          this.pasteTile(this.hoveredRow, this.hoveredColumn);
+          break;
+        case 'KeyQ':
+          break;
+        case 'KeyE':
+          break;
+        case 'KeyD':
+        case 'Delete':
+          this.clearTile(this.hoveredRow, this.hoveredColumn);
+          break;
+      }
     })
+  },
+  watch:{
+    bPaintModeEnabled: function(newValue){
+      if(newValue){
+        this.tileClickCallback = this.paintTile;
+      } else{
+        this.tileClickCallback = this.selectTile;
+      }
+    }
   },
   methods: {
     test(){
@@ -190,15 +226,7 @@ export default {
       this.mapTiles[0][0].partial.bottom = "barrier"
       this.mapTiles[0][0].partial.left = "hazard"
       // console.log(this.mapTiles);
-    },
-    togglePaintMode(){
-      let bPaintModeEnabled = document.getElementById('paintMode').checked;
-      if(bPaintModeEnabled){
-        this.tileClickCallback = this.paintTile;
-      } else{
-        this.tileClickCallback = this.selectTile;
-      }
-    },    
+    }, 
     changeMapWidth(e){
       let newValue = +e.target.value;
       let diff = newValue - this.mapWidth;
@@ -503,13 +531,25 @@ export default {
     },
     setTileOnHover(e, row, col){
       this.hoveredRow = row;
-      this.hoveredCol = col;
+      this.hoveredColumn = col;
     },
-    clearTile(e, row, col){
-      if(e.button == 1){
+    handleAuxMouseButtons(e, row, col){
+      if(e.button == 1){ // middle click
         e.preventDefault();
-        this.mapTiles[row][col] = {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }}
+        this.clearTile(row, col)
       }
+    },
+    clearTile(row, col){
+      this.mapTiles[row][col] = {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }}
+    },
+    copyTile(row, col){
+      this.copiedTile = {...this.mapTiles[row][col]};
+      this.copiedTile.partial = {...this.mapTiles[row][col].partial};
+    },
+    pasteTile(row, col){
+      console.log(row, col)
+      this.mapTiles[row][col] = {...this.copiedTile};
+      this.mapTiles[row][col].partial = {...this.copiedTile.partial};
     }
   },
 };
