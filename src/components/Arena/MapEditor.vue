@@ -1,4 +1,4 @@
-<!--features: move tiles (in select mode); copy/paste tiles; UI for row/column add/remove; hotkeys-->
+<!--features: move tiles (in select mode); UI for row/column add/remove; hotkeys; undo (commands or snapshot?;)-->
 <template>
   <div id="container">
     <div id="mapContainer">
@@ -59,18 +59,26 @@
         </select>
       </div>
 
+      <span>Copied Tile:</span>
+      <td :class="copiedTile.direction ? `${copiedTile.baseClassName}-${copiedTile.direction}` : copiedTile.baseClassName">
+        <div class="quadrant q-top" :class="copiedTile.partial.top"></div>
+        <div class="quadrant q-right" :class="copiedTile.partial.right"></div>
+        <div class="quadrant q-bot" :class="copiedTile.partial.bottom"></div>
+        <div class="quadrant q-left" :class="copiedTile.partial.left"></div>
+      </td>
+
     </div>
 
     <div id="contextmenu" v-show="bContextMenuShown">
       <ul id="menu">
-        <li class="ctxmenu-item" @click="selectAll()">Select All</li>
-        <li class="ctxmenu-item" @click="deselectAll()">Deselect All</li>
+        <li class="ctxmenu-item" @click="selectAll()">Select All (A)</li>
+        <li class="ctxmenu-item" @click="deselectAll()">Deselect All (Alt+A)</li>
         <hr>
         <li class="ctxmenu-item">
           <span>Select ►</span>
           <ul class="submenu">
-            <li class="ctxmenu-item" @click="selectRow(clickedRow)">Row</li>
-            <li class="ctxmenu-item" @click="selectColumn(clickedColumn)">Column</li>
+            <li class="ctxmenu-item" @click="selectRow(clickedRow)">Row (Shift+Left/Right)</li>
+            <li class="ctxmenu-item" @click="selectColumn(clickedColumn)">Column (Shift+Up/Down)</li>
             <li class="ctxmenu-item" @click="selectAdjacent(true)">Adjacent</li>
             <li class="ctxmenu-item" @click="selectAdjacent(false)">Adjacent (Ortho)</li>
             <hr>
@@ -104,10 +112,10 @@
         </li>
         <hr>
         <li class="ctxmenu-item">
-          <span>Rotate ►</span>
+          <span>Rotate (Q/E) ►</span>
           <ul class="submenu">
-            <li class="ctxmenu-item" @click="rotateSelected(true)">Clockwise</li>
-            <li class="ctxmenu-item" @click="rotateSelected(false)">Counterclockwise</li>
+            <li class="ctxmenu-item" @click="rotateSelected(true, false)">Clockwise</li>
+            <li class="ctxmenu-item" @click="rotateSelected(false, false)">Counterclockwise</li>
             <hr>
             <li class="ctxmenu-item" @click="$event.stopPropagation(); bRotatePartials = !bRotatePartials">
               <input type="checkbox" name="rotatePartials" id="rotatePartials" v-model="bRotatePartials">
@@ -149,7 +157,7 @@ export default {
       // tileSize: 100,
       mapTiles: [],
       selectedTiles: {},
-      copiedTile: {},
+      copiedTile: {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }},
       clickedRow: 0,
       clickedColumn: 0,
       hoveredRow: 0,
@@ -197,29 +205,50 @@ export default {
           this.copyTile(this.hoveredRow, this.hoveredColumn);
           break;
         case 'KeyV':
-          this.pasteTile(this.hoveredRow, this.hoveredColumn);
+          if(e.shiftKey){
+            this.pasteToSelected()
+          }else{
+            this.pasteTile(this.hoveredRow, this.hoveredColumn);
+          }
           break;
         case 'KeyQ':
           if(e.shiftKey){
-            this.rotateSelected(false);
+            this.rotateSelected(false, true);
           }else{
             this.rotateTile(this.hoveredRow, this.hoveredColumn, false);
           }
           break;
         case 'KeyE':
           if(e.shiftKey){
-            this.rotateSelected(false);
+            this.rotateSelected(false, true);
           }else{
             this.rotateTile(this.hoveredRow, this.hoveredColumn, true);
           }
           break;
         case 'KeyD':
-          case 'Delete':
+        case 'Delete':
             if(e.shiftKey){
               this.clearSelected()
             }
             else{
               this.clearTile(this.hoveredRow, this.hoveredColumn);
+            }
+          break;
+        case 'KeyA':
+            if(e.altKey){
+              this.deselectAll();
+            }
+            else{
+              this.selectAll();
+            }
+          break;
+        case 'KeyS':
+          //TODO radial tile picker
+            if(e.shiftKey){
+              //TODO partial picker
+            }
+            else{
+              //TODO full tile picker
             }
           break;
         case 'ArrowUp':
@@ -574,13 +603,13 @@ export default {
       this.mapWidth++;
       document.getElementById('mapWidth').value = this.mapWidth;
     },
-    rotateSelected(clockwise){
+    rotateSelected(clockwise, fromKeyboard){
       for(let index of Object.keys(this.selectedTiles)){
         let row = index[0];
         let col = index[1];
         this.rotateTile(row, col, clockwise)
       }
-      if(this.bDeselectAfterRotate){
+      if(this.bDeselectAfterRotate && !fromKeyboard){
         this.deselectAll();
       }
     },
@@ -624,9 +653,16 @@ export default {
       this.copiedTile.partial = {...this.mapTiles[row][col].partial};
     },
     pasteTile(row, col){
-      console.log(row, col)
+      // console.log(row, col)
       this.mapTiles[row][col] = {...this.copiedTile};
       this.mapTiles[row][col].partial = {...this.copiedTile.partial};
+    },
+    pasteToSelected(){
+      for(let index of Object.keys(this.selectedTiles)){
+        let row = index[0];
+        let col = index[1];
+        this.pasteTile(row, col)
+      }
     }
   },
 };
