@@ -2,7 +2,7 @@
 <template>
   <div id="container">
     <div id="mapContainer">
-      <table id="map">
+      <table id="map" @mouseleave="unsetHoveredTile()">
         <tbody>
           <tr v-for="(row, rowIndex) in mapTiles" :key="rowIndex">
             <td v-for="(col, colIndex) of row" :key="colIndex"
@@ -100,7 +100,7 @@
           <ul class="submenu">
             <li class="ctxmenu-item" v-for="dir in ['top','bottom','right','left', 'all']" :key="dir">{{dir}} ►
               <ul class="submenu">
-                <li class="ctxmenu-item" @click="setSelectedPartial(dir, 'tile')">empty</li>
+                <li class="ctxmenu-item" @click="setSelectedPartial(dir, '')">empty</li>
                 <li class="ctxmenu-item" v-for="tile in Object.keys(partials)" :key="tile" @click="setSelectedPartial(dir, tile)">{{tile}}</li>
               </ul>
             </li>
@@ -160,8 +160,8 @@ export default {
       copiedTile: {...tiles.empty, partial: { top: "", right:"", bottom:"", left:"" }},
       clickedRow: 0,
       clickedColumn: 0,
-      hoveredRow: 0,
-      hoveredColumn: 0,
+      hoveredRow: -1,
+      hoveredColumn: -1,
       tileClickCallback: null,
       bPaintModeEnabled: true,
       bContextMenuShown: false,
@@ -194,6 +194,13 @@ export default {
     });
 
     document.addEventListener('keydown', (e) => {
+      // TODO currently all hotkeys are disabled if you're not hovering over a tile
+      // find a clean way to allow/disallow based on if the action requires hover to work
+      // i.e. select/deselect all doesn't need a target, so it should work when not hovering
+      if(this.hoveredRow < 0 || this.hoveredColumn < 0){
+        console.log("hovered tile unset");
+        return;
+      }
       console.log(e.code)
       switch(e.code){
         // TODO finish keybinds
@@ -304,15 +311,21 @@ export default {
       } else{
         this.tileClickCallback = this.selectTile;
       }
+    },
+    mapHeight: function(newValue){
+      document.getElementById('mapHeight').value = newValue;
+    },
+    mapWidth: function(newValue){
+      document.getElementById('mapWidth').value = newValue;
     }
-    //TODO add watchers for map width/height to set the HTML sliders properly?
   },
   methods: {
     test(){
-      this.mapTiles[0][0].partial.right = "wall"
-      this.mapTiles[0][0].partial.top = "hole"
-      this.mapTiles[0][0].partial.bottom = "barrier"
-      this.mapTiles[0][0].partial.left = "hazard"
+      // this.mapTiles[0][0].partial.right = "wall"
+      // this.mapTiles[0][0].partial.top = "hole"
+      // this.mapTiles[0][0].partial.bottom = "barrier"
+      // this.mapTiles[0][0].partial.left = "hazard"
+      console.log(this.generatePartialsCode(this.mapTiles[0][0].partial))
       // console.log(this.mapTiles);
     }, 
     changeMapWidth(e){
@@ -439,21 +452,54 @@ export default {
       this.mapTiles = rows;
       this.mapHeight = rows.length;
       this.mapWidth = rows[0].length;
-      document.getElementById('mapHeight').value = this.mapHeight;
-      document.getElementById('mapWidth').value = this.mapWidth;
+      // document.getElementById('mapHeight').value = this.mapHeight;
+      // document.getElementById('mapWidth').value = this.mapWidth;
     },
     generateMapCode(){
-      //TODO generate partial codes
       let mapCode = '';
       for(let row of this.mapTiles){
         for(let tile of row){
           mapCode = mapCode.concat(tile.code);
+          if(tile.direction){
+            mapCode = mapCode.concat(tile.direction[0]);
+          }
+          mapCode = mapCode.concat(this.generatePartialsCode(tile.partial))
         }
         mapCode = mapCode.concat('|')
       }
       mapCode = mapCode.slice(0, -1)
+      //TODO run length encoding
       document.getElementById('mapCodeOutput').value = mapCode;
       navigator.clipboard.writeText(mapCode);
+    },
+    generatePartialsCode(partials){
+      let partialsCopy = {...partials};
+      let partialsCode = '';
+      for(let key of Object.keys(partialsCopy)){
+        if(!partialsCopy[key]){
+          partialsCopy[key] = 'empty';
+        }
+        partialsCopy[key] = tiles[partialsCopy[key]].code;
+      }
+      let {top, right, bottom, left} = partialsCopy;
+
+      // all 4 partials are the same -> just use the single value
+      if(Object.values(partialsCopy).every(partial => partial === top)){
+        if(top === 'E'){
+          return '';
+        }
+        console.log("all equal");
+        partialsCode = `(${top})`;
+      }
+      // pairwise top-bottom and left-right equality
+      else if(top === bottom && left === right){
+        partialsCode = `(${top}${right})`
+      }
+      // write all 4 distinct values
+      else{
+        partialsCode = `(${top}${right}${bottom}${left})`
+      }
+      return partialsCode;
     },
     customRightClick(e, row, col)
     {
@@ -481,7 +527,7 @@ export default {
         for(let i = 0; i < this.mapWidth; i++){
             delete this.selectedTiles[`${row}${i}`]
         }
-        document.getElementById('mapHeight').value = this.mapHeight;
+        // document.getElementById('mapHeight').value = this.mapHeight;
       }
     },
     deleteColumn(col){
@@ -496,7 +542,7 @@ export default {
             delete this.selectedTiles[`${i}${col}`]
             console.log(this.selectedTiles);
         }
-        document.getElementById('mapWidth').value = this.mapWidth;
+        // document.getElementById('mapWidth').value = this.mapWidth;
       }
     },
     selectRow(row){
@@ -587,7 +633,7 @@ export default {
 
       this.mapTiles.splice(rowIndex, 0, newRow);
       this.mapHeight++;
-      document.getElementById('mapHeight').value = this.mapHeight;
+      // document.getElementById('mapHeight').value = this.mapHeight;
     },
     insertColumn(col, insertRight){
       if(this.mapWidth == 9){
@@ -601,7 +647,7 @@ export default {
       }
 
       this.mapWidth++;
-      document.getElementById('mapWidth').value = this.mapWidth;
+      // document.getElementById('mapWidth').value = this.mapWidth;
     },
     rotateSelected(clockwise, fromKeyboard){
       for(let index of Object.keys(this.selectedTiles)){
@@ -631,6 +677,11 @@ export default {
     setTileOnHover(e, row, col){
       this.hoveredRow = row;
       this.hoveredColumn = col;
+    },
+    unsetHoveredTile(){
+      console.log("clearing hovered tile");
+      this.hoveredRow = -1;
+      this.hoveredColumn = -1;
     },
     handleAuxMouseButtons(e, row, col){
       if(e.button == 1){ // middle click
@@ -819,5 +870,6 @@ ul hr{
   position:absolute;
   top:0;
   left:0;
+  pointer-events: none;
 }
 </style>
