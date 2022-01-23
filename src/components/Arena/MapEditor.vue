@@ -421,54 +421,117 @@ export default {
       this.selectedTiles = {}
     },
     loadMapCode(){
-      //TODO better parsing to handle partial codes
+      // TODO
       let input = document.getElementById('mapCodeInput').value;
       let rows = input.split('|');
+      let height = rows[0][0];
+      let width = rows[0][2];
 
-      if(rows.some(row => row.length !== rows[0].length)){
-        alert('Maps must be rectangular. Fix the input and try again.');
-        return;
-      }
-
-      if(rows.length < 3 || rows.some(row => row.length < 3)){
+      if (height < 3 || width < 3){
         alert('Maps must be at least 3x3.');
         return;
       }
-
-      if(rows.length > 9 || rows.some(row => row.length > 9)){
+      
+      if (height > 9 || width > 9){
         alert('Maps must be at most 9x9.');
         return;
       }
 
-      rows = rows.map(row =>
-      Array.from(row).map( code =>
-        {
-          let tileKeyForCode = Object.keys(tiles).find(key => tiles[key].code === code);
-          if(tileKeyForCode) { return tiles[tileKeyForCode]; }
-          else { alert('Invalid tile code. Fix the input and try again.') }
-        }
-      ));
+      console.log(height, width)
 
-      this.mapTiles = rows;
-      this.mapHeight = rows.length;
-      this.mapWidth = rows[0].length;
-      // document.getElementById('mapHeight').value = this.mapHeight;
-      // document.getElementById('mapWidth').value = this.mapWidth;
-    },
-    generateMapCode(){
-      let mapCode = '';
-      for(let row of this.mapTiles){
-        for(let tile of row){
-          mapCode = mapCode.concat(tile.code);
-          if(tile.direction){
-            mapCode = mapCode.concat(tile.direction[0]);
-          }
-          mapCode = mapCode.concat(this.generatePartialsCode(tile.partial))
-        }
-        mapCode = mapCode.concat('|')
+      for(let i = 1; i < rows.length; i++){
+        console.log(rows[i]);
+        // this.mapTiles.splice(i - 1, 1, this.parseRow(rows[i]));\
       }
-      mapCode = mapCode.slice(0, -1)
-      //TODO run length encoding
+
+      this.mapHeight = height;
+      this.mapWidth = width;
+      // this.mapTiles = rows;
+    },
+    /* parseRow(rowString){
+      // parsing grammar (currently without symmetry):
+      // row := tile{3, 9} (symmetry modifiers would go here)
+      // tile := count? code direction? partial
+      // count := 3|4|5|6|7|8|9
+      // code := <dynamically generated from tiles.js>
+      // direction := t|r|b|l
+      // partial := LPAR partialstring RPAR
+      // partialstring := partialcode | partialcode{2} | partialcode{4}
+      // partialcode := <dynamically generated from tiles.js>
+      // =======================================================================
+      let parsedRow = [];
+      let stringIndex = 0;
+      while(stringIndex < rowString.length){
+        let parsedTileResult = this.parseTile(rowString, stringIndex);
+        if(parsedTileResult.tile){
+          stringIndex += parsedTileResult.tokenLength;
+          parsedRow.push(...parsedTileResult.tiles);
+        }
+        else{
+          return null;
+        }
+      }
+      // =======================================================================
+    },
+    parseTile(input, index){
+      let tileCode = '';
+      let direction = '';
+      let partial = {top: '', right: '',bottom: '', left: ''};
+      if(input[index] >= '0' && input[index] <= '9'){
+        let repeatCount = +input[index];
+        if(repeatCount < 3 || repeatCount > 9){
+          alert("Maps need to be between 3 and 9 tiles wide")
+          return null;
+        }
+        console.log("parsing run length encoded tile...") // TODO
+        //todo the 'else' logic should actually go in a for-loop with length repeatCount
+        index++;
+      }
+      else{
+        tileCode = input[index];
+        index++;
+        if(['t','r','b','l'].includes(input[index])){
+          direction = input[index];
+          index++;
+        }
+        if(input[index] == '('){
+          let rparenIndex = input.indexOf(')', index);
+          let partialLength = rparenIndex - index - 1;
+          index++;
+          switch(partialLength){
+            case 1:
+              // TODO somewhere in the code, build code->tile and letter->direction maps for reference
+              // so you don't have to do filtering bullshit
+              break;
+            case 2:
+              break;
+            case 4:
+              break;
+            default:
+              alert('Invalid number of characters in partial tile string!')
+              return null;
+          }
+        }
+      }
+    }, */
+    generateMapCode(){
+      let mapCode = `${this.mapHeight}x${this.mapWidth}`;
+      for(let row of this.mapTiles){
+        mapCode = mapCode.concat('|')
+        let rowCode = ''
+        for(let tile of row){
+          rowCode = rowCode.concat(tile.code);
+          if(tile.direction){
+            rowCode = rowCode.concat(tile.direction[0]);
+          }
+          rowCode = rowCode.concat(this.generatePartialsCode(tile.partial))
+          rowCode = rowCode.concat(' ')
+        }
+        // tech debt: maybe replace this hacky regex solution with a lower-level token-oriented one?
+        rowCode = rowCode.replace(/(\b.+?\b ?)\1+/g, (match, group) => (match.length / group.length) + group)
+        rowCode = rowCode.replace(/\s+/g, '');
+        mapCode = mapCode.concat(rowCode)
+      }
       document.getElementById('mapCodeOutput').value = mapCode;
       navigator.clipboard.writeText(mapCode);
     },
@@ -488,7 +551,6 @@ export default {
         if(top === 'E'){
           return '';
         }
-        console.log("all equal");
         partialsCode = `(${top})`;
       }
       // pairwise top-bottom and left-right equality
