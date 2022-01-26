@@ -175,6 +175,8 @@ export default {
   created(){
     this.fullTiles = Object.fromEntries(Object.entries(tiles).filter(kvp => !kvp[1].onlyPartial));
     this.partials = Object.fromEntries(Object.entries(tiles).filter(kvp => kvp[1].canBePartial));
+    console.log(this.fullTiles);
+    console.log(this.partials);
     this.tileClickCallback = this.paintTile;
   },
   mounted()
@@ -449,15 +451,6 @@ export default {
       // this.mapTiles = rows;
     },
     /* parseRow(rowString){
-      // parsing grammar (currently without symmetry):
-      // row := tile{3, 9} (symmetry modifiers would go here)
-      // tile := count? code direction? partial
-      // count := 3|4|5|6|7|8|9
-      // code := <dynamically generated from tiles.js>
-      // direction := t|r|b|l
-      // partial := LPAR partialstring RPAR
-      // partialstring := partialcode | partialcode{2} | partialcode{4}
-      // partialcode := <dynamically generated from tiles.js>
       // =======================================================================
       let parsedRow = [];
       let stringIndex = 0;
