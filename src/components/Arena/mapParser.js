@@ -1,6 +1,6 @@
 const dirCodeToDirStringMap = { t: 'top', r: 'right', b: 'bottom', l: 'left' };
-const tileCodeToTileMap = {};
-const partialCodeToTileMap = {};
+let tileCodeToTileMap = {};
+let partialCodeToTileMap = {};
 let rowStringGlobal = '';
 let pos = 0;
 let currentChar = '';
@@ -9,22 +9,28 @@ let currentChar = '';
 export function parseRow(rowString, fullTiles, partials){
     tileCodeToTileMap = createCodeToTileMap(fullTiles);
     partialCodeToTileMap = createCodeToTileMap(partials);
+    partialCodeToTileMap['E'] = { baseClassName: '' };
     rowStringGlobal = rowString;
 
     let parsedRow = [];
+    currentChar = rowString[0];
 
     while(currentChar){
-        let count = count();
-        if(count > 1){
+        let currentCount = count();
+        if(currentCount > 1){
             let parsedTile = tile();
-            for (let i = 0; i < count; i++) {
-                parsedRow.push(parsedTile);
+            for (let i = 0; i < currentCount; i++) {
+                parsedRow.push({...parsedTile, partial: {...parsedTile.partial}});
             }
         } else{
             parsedRow.push(tile());
         }
     }
     
+    rowStringGlobal = '';
+    pos = 0;
+    currentChar = '';
+
     return parsedRow;
 }
 
@@ -47,7 +53,7 @@ function tile(){
     let partialObject = partial();
     let tileObject = { ...tileCodeToTileMap[tileCode] };
     if(tileDirection){
-        tileObject.direction = direction;
+        tileObject.direction = tileDirection;
     }
     if(partialObject){
         tileObject.partial = partialObject;
@@ -90,36 +96,34 @@ function direction(){
 
 // partial := LPAR partialstring RPAR
 function partial(){
+    let partialObject = {top: '', right: '',bottom: '', left: ''};
     if(currentChar == '('){
         advance();
-        let partialObject = {top: '', right: '',bottom: '', left: ''};
-        let partialCodes = partialstring();
+        let partialCodes = partialString();
         switch(partialCodes.length){
             case 1:
-                partialObject.top = partialCodeToTileMap[partialCodes[0]];
+                partialObject.top = partialCodeToTileMap[partialCodes[0]].baseClassName;
                 partialObject.right = partialObject.top;
                 partialObject.bottom = partialObject.top;
                 partialObject.left = partialObject.top;
                 break;
             case 2:
-                partialObject.top = partialCodeToTileMap[partialCodes[0]];
+                partialObject.top = partialCodeToTileMap[partialCodes[0]].baseClassName;
                 partialObject.bottom = partialObject.top;
-                partialObject.right = partialCodeToTileMap[partialCodes[1]];
+                partialObject.right = partialCodeToTileMap[partialCodes[1]].baseClassName;
                 partialObject.left = partialObject.right;
                 break;
             case 4:
-                partialObject.top = partialCodeToTileMap[partialCodes[0]];
-                partialObject.right = partialCodeToTileMap[partialCodes[1]];
-                partialObject.bottom = partialCodeToTileMap[partialCodes[2]];
-                partialObject.left = partialCodeToTileMap[partialCodes[3]];
+                partialObject.top = partialCodeToTileMap[partialCodes[0]].baseClassName;
+                partialObject.right = partialCodeToTileMap[partialCodes[1]].baseClassName;
+                partialObject.bottom = partialCodeToTileMap[partialCodes[2]].baseClassName;
+                partialObject.left = partialCodeToTileMap[partialCodes[3]].baseClassName;
                 break;
             default:
-                return null;
+                return null; // throw exception instead?
         }
-        return partialObject;
-    } else {
-        return null;
     }
+    return partialObject;
 }
 
 // partialstring := partialcode | partialcode{2} | partialcode{4}

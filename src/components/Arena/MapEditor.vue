@@ -1,4 +1,4 @@
-<!--features: move tiles (in select mode); UI for row/column add/remove; hotkeys; undo (commands or snapshot?;)-->
+<!--features: move tiles (in select mode); UI for row/column add/remove; hotkeys; undo (commands or snapshot?); detecting and encoding map symmetry during (de)serialization-->
 <template>
   <div id="container">
     <div id="mapContainer">
@@ -148,6 +148,7 @@
 
 <script>
 import {tiles} from "./tiles"
+import {parseRow} from "./mapParser"
 export default {
   name: "MapEditor",
   data() {
@@ -175,8 +176,8 @@ export default {
   created(){
     this.fullTiles = Object.fromEntries(Object.entries(tiles).filter(kvp => !kvp[1].onlyPartial));
     this.partials = Object.fromEntries(Object.entries(tiles).filter(kvp => kvp[1].canBePartial));
-    console.log(this.fullTiles);
-    console.log(this.partials);
+    // console.log(this.fullTiles);
+    // console.log(this.partials);
     this.tileClickCallback = this.paintTile;
   },
   mounted()
@@ -200,7 +201,7 @@ export default {
       // find a clean way to allow/disallow based on if the action requires hover to work
       // i.e. select/deselect all doesn't need a target, so it should work when not hovering
       if(this.hoveredRow < 0 || this.hoveredColumn < 0){
-        console.log("hovered tile unset");
+        // console.log("hovered tile unset");
         return;
       }
       console.log(e.code)
@@ -327,8 +328,8 @@ export default {
       // this.mapTiles[0][0].partial.top = "hole"
       // this.mapTiles[0][0].partial.bottom = "barrier"
       // this.mapTiles[0][0].partial.left = "hazard"
-      console.log(this.generatePartialsCode(this.mapTiles[0][0].partial))
-      // console.log(this.mapTiles);
+      // console.log(this.generatePartialsCode(this.mapTiles[0][0].partial))
+      console.log(this.mapTiles[0][0]);
     }, 
     changeMapWidth(e){
       let newValue = +e.target.value;
@@ -403,6 +404,9 @@ export default {
       if(bPaintModeEnabled){
         e.stopPropagation();
         let selectedPartialType = document.getElementById('partialSelect').value;
+        if(selectedPartialType === this.mapTiles[row][col].baseClassName){
+          return;
+        }
         let currentPartial = this.mapTiles[row][col].partial[dir];
         if(currentPartial === selectedPartialType){
           this.mapTiles[row][col].partial[dir] = '';
@@ -423,7 +427,7 @@ export default {
       this.selectedTiles = {}
     },
     loadMapCode(){
-      // TODO
+      // TODO validate row lengths
       let input = document.getElementById('mapCodeInput').value;
       let rows = input.split('|');
       let height = rows[0][0];
@@ -439,74 +443,15 @@ export default {
         return;
       }
 
-      console.log(height, width)
-
       for(let i = 1; i < rows.length; i++){
-        console.log(rows[i]);
-        // this.mapTiles.splice(i - 1, 1, this.parseRow(rows[i]));\
+        rows[i] = parseRow(rows[i], this.fullTiles, this.partials);
+        console.log(rows[i])
       }
 
+      this.mapTiles = rows.slice(1);
       this.mapHeight = height;
       this.mapWidth = width;
-      // this.mapTiles = rows;
     },
-    /* parseRow(rowString){
-      // =======================================================================
-      let parsedRow = [];
-      let stringIndex = 0;
-      while(stringIndex < rowString.length){
-        let parsedTileResult = this.parseTile(rowString, stringIndex);
-        if(parsedTileResult.tile){
-          stringIndex += parsedTileResult.tokenLength;
-          parsedRow.push(...parsedTileResult.tiles);
-        }
-        else{
-          return null;
-        }
-      }
-      // =======================================================================
-    },
-    parseTile(input, index){
-      let tileCode = '';
-      let direction = '';
-      let partial = {top: '', right: '',bottom: '', left: ''};
-      if(input[index] >= '0' && input[index] <= '9'){
-        let repeatCount = +input[index];
-        if(repeatCount < 3 || repeatCount > 9){
-          alert("Maps need to be between 3 and 9 tiles wide")
-          return null;
-        }
-        console.log("parsing run length encoded tile...") // TODO
-        //todo the 'else' logic should actually go in a for-loop with length repeatCount
-        index++;
-      }
-      else{
-        tileCode = input[index];
-        index++;
-        if(['t','r','b','l'].includes(input[index])){
-          direction = input[index];
-          index++;
-        }
-        if(input[index] == '('){
-          let rparenIndex = input.indexOf(')', index);
-          let partialLength = rparenIndex - index - 1;
-          index++;
-          switch(partialLength){
-            case 1:
-              // TODO somewhere in the code, build code->tile and letter->direction maps for reference
-              // so you don't have to do filtering bullshit
-              break;
-            case 2:
-              break;
-            case 4:
-              break;
-            default:
-              alert('Invalid number of characters in partial tile string!')
-              return null;
-          }
-        }
-      }
-    }, */
     generateMapCode(){
       let mapCode = `${this.mapHeight}x${this.mapWidth}`;
       for(let row of this.mapTiles){
@@ -659,6 +604,9 @@ export default {
             for(let index of Object.keys(this.selectedTiles)){
             let row = index[0];
             let col = index[1];
+            if(partialType === this.mapTiles[row][col].baseClassName){
+              return;
+            }
             this.mapTiles[row][col].partial[dir] = partialType;
           }
         }
@@ -667,6 +615,9 @@ export default {
         for(let index of Object.keys(this.selectedTiles)){
           let row = index[0];
           let col = index[1];
+          if(partialType === this.mapTiles[row][col].baseClassName){
+            return;
+          }
           this.mapTiles[row][col].partial[dir] = partialType;
         }
       }
@@ -734,7 +685,7 @@ export default {
       this.hoveredColumn = col;
     },
     unsetHoveredTile(){
-      console.log("clearing hovered tile");
+      // console.log("clearing hovered tile");
       this.hoveredRow = -1;
       this.hoveredColumn = -1;
     },
