@@ -7,7 +7,7 @@
           <tr v-for="(row, rowIndex) in mapTiles" :key="rowIndex">
             <td v-for="(col, colIndex) of row" :key="colIndex"
             :class="[col.direction ? `${col.baseClassName}-${col.direction}` : col.baseClassName, selectedTiles[String(rowIndex) + colIndex] ? 'selected' : '']"
-            @click="tileClickCallback($event, rowIndex, colIndex)"
+            @click="$el.ownerDocument.defaultView.console.log('click');tileClickCallback($event, rowIndex, colIndex)"
             @mousedown="handleAuxMouseButtons($event, rowIndex, colIndex)"
             @mouseenter="setTileOnHover($event, rowIndex, colIndex)"
             @contextmenu="customRightClick($event, rowIndex, colIndex)"
@@ -309,6 +309,7 @@ export default {
   },
   watch:{
     bPaintModeEnabled: function(newValue){
+      console.log(`switching callback; paintMode:${newValue}`);
       if(newValue){
         this.tileClickCallback = this.paintTile;
       } else{
@@ -330,6 +331,7 @@ export default {
       // this.mapTiles[0][0].partial.left = "hazard"
       // console.log(this.generatePartialsCode(this.mapTiles[0][0].partial))
       console.log(this.mapTiles[0][0]);
+      console.log(this.areTilesEqual(this.mapTiles[0][0], this.mapTiles[0][1]));
     }, 
     changeMapWidth(e){
       let newValue = +e.target.value;
@@ -377,6 +379,7 @@ export default {
     },
     selectTile(e, row, col)
     {
+      // console.log('selecting...');
       let tileIndex = `${row}${col}`;
       let existingSelection = this.selectedTiles[tileIndex];
       if(existingSelection)
@@ -390,6 +393,7 @@ export default {
       // console.log(this.selectedTiles);
     },
     paintTile(e, row, col){
+      // console.log('painting...');
       let selectedTileType = document.getElementById('tileSelect').value;
       console.log(selectedTileType);
       if(this.bOverwritePartials){
@@ -427,7 +431,6 @@ export default {
       this.selectedTiles = {}
     },
     loadMapCode(){
-      // TODO validate row lengths
       let input = document.getElementById('mapCodeInput').value;
       let rows = input.split('|');
       let height = rows[0][0];
@@ -443,35 +446,58 @@ export default {
         return;
       }
 
-      for(let i = 1; i < rows.length; i++){
+      rows = rows.slice(1);
+
+      for(let i = 0; i < rows.length; i++){
         rows[i] = parseRow(rows[i], this.fullTiles, this.partials);
-        console.log(rows[i])
+        // console.log(rows[i])
       }
 
-      this.mapTiles = rows.slice(1);
+      if(!rows.every(row => row.length == width) || rows.length != height){
+        alert('The map must be rectangular. Fix the input and try again.');
+        return;
+      }
+
+      this.mapTiles = rows;
       this.mapHeight = height;
       this.mapWidth = width;
     },
     generateMapCode(){
       let mapCode = `${this.mapHeight}x${this.mapWidth}`;
       for(let row of this.mapTiles){
-        mapCode = mapCode.concat('|')
-        let rowCode = ''
-        for(let tile of row){
-          rowCode = rowCode.concat(tile.code);
-          if(tile.direction){
-            rowCode = rowCode.concat(tile.direction[0]);
+        mapCode += '|';
+        let rowCode = '';
+        let lastTile = row[0];
+        let runLengthCounter = 1;
+        for(let i = 1; i < row.length; i++){
+          if(this.areTilesEqual(row[i], lastTile)){
+            runLengthCounter++;
+            continue;
+          }else{
+            rowCode += runLengthCounter > 1 ? runLengthCounter : '';
+            rowCode += lastTile.code;
+            rowCode += lastTile.direction?.[0] || '';
+            rowCode += this.generatePartialsCode(lastTile.partial)
+            lastTile = row[i];
+            runLengthCounter = 1;
           }
-          rowCode = rowCode.concat(this.generatePartialsCode(tile.partial))
-          rowCode = rowCode.concat(' ')
         }
-        // tech debt: maybe replace this hacky regex solution with a lower-level token-oriented one?
-        rowCode = rowCode.replace(/(\b.+?\b ?)\1+/g, (match, group) => (match.length / group.length) + group)
-        rowCode = rowCode.replace(/\s+/g, '');
-        mapCode = mapCode.concat(rowCode)
+        rowCode += runLengthCounter > 1 ? runLengthCounter : '';
+        rowCode += lastTile.code;
+        rowCode += lastTile.direction?.[0] || '';
+        rowCode += this.generatePartialsCode(lastTile.partial);
+        mapCode += rowCode;
       }
       document.getElementById('mapCodeOutput').value = mapCode;
       navigator.clipboard.writeText(mapCode);
+    },
+    areTilesEqual(lhs, rhs){
+      return lhs.baseClassName == rhs.baseClassName
+      && lhs.direction == rhs.direction
+      && lhs.partial.top == rhs.partial.top
+      && lhs.partial.right == rhs.partial.right
+      && lhs.partial.bottom == rhs.partial.bottom
+      && lhs.partial.left == rhs.partial.left
     },
     generatePartialsCode(partials){
       let partialsCopy = {...partials};
@@ -531,6 +557,7 @@ export default {
       }
     },
     deleteColumn(col){
+      console.log(col);
       if(col < 0 || col >= this.mapWidth){
         console.log("out of bounds");
         return;
@@ -540,7 +567,6 @@ export default {
         this.mapWidth--;
         for(let i = 0; i < this.mapHeight; i++){
             delete this.selectedTiles[`${i}${col}`]
-            console.log(this.selectedTiles);
         }
         // document.getElementById('mapWidth').value = this.mapWidth;
       }
