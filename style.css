@@ -126,7 +126,8 @@ summary {
     background-color: var(--accent-color);
   }
 
-  & h2 {
+  & h2,
+  h4 {
     display: inline;
   }
 }
@@ -205,4 +206,9 @@ figcaption {
   & button:hover {
     background-color: var(--accent-color);
   }
+}
+
+blockquote {
+  border-left: 4px solid var(--accent-color);
+  padding-left: 1ch;
 }
