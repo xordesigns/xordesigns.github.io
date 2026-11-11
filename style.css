@@ -212,3 +212,23 @@ blockquote {
   border-left: 4px solid var(--accent-color);
   padding-left: 1ch;
 }
+
+tr:nth-child(even) {
+  background-color: var(--accent-color);
+
+  & td:nth-child(2) {
+    border-color: var(--base-color);
+  }
+}
+
+td:nth-child(1) {
+  text-align: center;
+}
+
+td:nth-child(2) {
+  border-left: 4px solid var(--accent-color);
+
+  & ul {
+    margin-block: 1ch;
+  }
+}
