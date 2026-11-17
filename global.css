@@ -1,0 +1,37 @@
+:root {
+  --base-color: #333;
+  --text-color: #fff;
+  /* --base-color: #fee;
+  --text-color: #333; */
+  --accent-color: #666;
+  --hint-color: #a8d7a9;
+  --hint-bg-color: #435343;
+  --effect-color: #6aabe0;
+  --effect-bg-color: #364a5c;
+  --important-color: #ffcb5c;
+  --important-bg-color: #624f26;
+  --interrupt-color: #c14254;
+  --interrupt-bg-color: #3f282b;
+  --top-button-size: 3rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: clamp(1rem, 0.462vw + 0.88rem, 1.25rem);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--base-color);
+  color: var(--text-color);
+  font-family: "Consolas", monospace;
+}

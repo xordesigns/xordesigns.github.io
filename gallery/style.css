@@ -1,0 +1,16 @@
+.container {
+  background-color: cadetblue;
+  max-width: calc(100% - 2rem);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 1rem;
+  row-gap: 1rem;
+  justify-items: center;
+}
+
+.card{
+  width: min(100%, 65svh * 63 / 88);
+  aspect-ratio: 63/88;
+  background-color: indianred;
+}
