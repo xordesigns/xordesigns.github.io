@@ -1,5 +1,4 @@
 #container {
-  /* background-color: cadetblue; */
   max-width: min(100% - 2rem, 80ch);
   margin-inline: auto;
   display: flow-root;
