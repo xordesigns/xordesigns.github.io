@@ -35,3 +35,35 @@ body {
   color: var(--text-color);
   font-family: "Consolas", monospace;
 }
+
+.box-inline {
+  border-radius: 4px;
+  border-width: 2px;
+  border-style: dashed;
+  padding-inline: 0.5ch;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+details {
+  margin-block: 1rem;
+}
+
+summary {
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--accent-color);
+  }
+
+  & h2,
+  h4 {
+    display: inline;
+  }
+}
+
+code {
+  background-color: var(--accent-color);
+  padding-inline: 0.5ch;
+  border-radius: 4px;
+}

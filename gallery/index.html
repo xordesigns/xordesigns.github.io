@@ -9,6 +9,119 @@
   </head>
   <body>
     <div id="container">
+      <div id="searchmenu">
+        <input
+          type="search"
+          name="search"
+          id="search"
+          placeholder="Search for card names or keywords (case-insensitive)..."
+        />
+        <details>
+          <summary>Syntax help</summary>
+          <p>
+            Any search term that's not a keyword is treated as a card name.
+            Names are 'cleaned' for searching - special characters and numbers
+            are transformed back into letters, so e.g. <code>reaper</code> will
+            match <code>__reapeR</code> and <code>ruination</code> will match
+            <code>*ru1nation</code> respectively
+          </p>
+          <p>
+            Use the following keywords to filter the results. You can use any
+            number of keywords at once, separated with spaces:
+          </p>
+          <ul>
+            <li>
+              <code>t:</code> - Cards of the given type; e.g.
+              <code>t:function</code> or <code>t:lambda</code>
+            </li>
+            <li>
+              <code>s:</code> - Cards of the given subtype; e.g.
+              <code>t:Daemon</code> or <code>t:Coroutine</code>
+            </li>
+            <li>
+              <code>e:</code> - Searches the card's full effect text for the
+              string. Requires quotes; e.g. <code>e:"draw"</code> or
+              <code>e:"Trash 1 installed Function"</code>
+            </li>
+            <li>
+              <code>fe:</code> - Searches the card's Function effect text for
+              the string. Requires quotes; e.g. <code>fe:"trash"</code> will
+              match only Functions with the word 'trash' in their Function
+              effect
+            </li>
+            <li>
+              <code>ie:</code> - Searches the card's Interrupt effect text for
+              the string. Requires quotes; e.g. <code>ie:"draw"</code>
+            </li>
+            <li>
+              <code>slot:</code> - Cards whose effects match the slot
+              requirement. Can write multiple slots separated with slashes; e.g.
+              <code>slot:3</code> or <code>slot:1/2</code>
+            </li>
+            <li>
+              <code>!&lt;condition&gt;:</code> or
+              <code>-&lt;condition&gt;:</code> - Negates the following
+              condition, excluding cards that match it; e.g.
+              <code>!t:function</code> will match all non-Function cards
+            </li>
+          </ul>
+          <p>Miscellaneous keywords:</p>
+          <ul>
+            <li>
+              <code>id:</code> - Matches the card with the specified unique ID
+              number. Each card's ID is the same regardless of printing; e.g.
+              <code>id:1</code> will match the card <code>__alloc(8)</code>,
+              whether it's from the original set or reprints
+            </li>
+            <li>
+              <code>a:</code> - Cards with art created by the specified artist.
+              Requires quotes; e.g. <code>a:"SDGecko"</code>
+            </li>
+            <li>
+              <code>ft:</code> - Searches the card's flavor text for the string.
+              Requires quotes; e.g. <code>ft:"entropy's king"</code>
+            </li>
+            <li>
+              <code>set:</code> - Cards released in the specified set. Only
+              matches the 3-letter set code (for now); e.g. <code>set:ADO</code>
+            </li>
+            <li>
+              <code>is:</code> - Cards that match the following predefined
+              criteria:
+              <ul>
+                <li><code>basic</code> - Cards with no subtype.</li>
+                <li><code>advanced</code> - Cards with any subtype.</li>
+                <li>
+                  <code>etr</code> - Cards with an 'end the run' Interrupt
+                  effect. Same as <code>ie:"End the run"</code>.
+                </li>
+                <li><code>split</code> - Lambdas with split effects.</li>
+                <li>
+                  <code>global</code> - Cards with a 1/2/3 effect. Same as
+                  <code>slot:1/2/3</code>
+                </li>
+                <li>
+                  <code>complex</code> - Cards with additional rulings or
+                  reminder text. The latter is equivalent to <code>e:"("</code>
+                </li>
+                <li><b>...more to be added as needed</b></li>
+              </ul>
+            </li>
+          </ul>
+          <p>AND and OR</p>
+          <p class="note">
+            Keywords are additive (AND) by default, meaning they match cards
+            that fit *all* given keywords. You can put multiple keywords in
+            parentheses with <code>OR</code> between them to match *any* of
+            those keywords instead e.g.
+            <code>(e:"trash" or e:"unlock")</code> will match all cards with
+            <code>trash</code> or <code>unlock</code> in their effect text,
+            instead of needing both words to appear. You can also explicitly use
+            AND in the same way for readability, but it's not mandatory since
+            it's the default behavior.
+          </p>
+        </details>
+      </div>
       <div class="grid">
         <img src="../assets/INDEXR.webp" class="card" />
         <img src="../assets/INDEXR.webp" class="card" />

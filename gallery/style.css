@@ -30,3 +30,19 @@
   max-height: 80svh;
   height: auto;
 }
+
+#searchmenu {
+  /* background-color: cadetblue; */
+  padding-bottom: 1rem;
+  padding-inline: 1ch;
+}
+
+#search {
+  width: 100%;
+  border: 2px solid var(--accent-color);
+  background-color: var(--base-color);
+  color: var(--text-color);
+  padding: 1ch;
+  border-radius: 8px;
+  font-size: inherit;
+}
