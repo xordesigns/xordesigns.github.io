@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="../global.css" />
     <link rel="stylesheet" href="style.css" />
+    <script src="cards.js"></script>
+    <script src="lexer.js" defer></script>
+    <script src="script.js" defer></script>
     <title>Card Gallery</title>
   </head>
   <body>
@@ -36,7 +39,7 @@
             </li>
             <li>
               <code>s:</code> - Cards of the given subtype; e.g.
-              <code>t:Daemon</code> or <code>t:Coroutine</code>
+              <code>s:Daemon</code> or <code>s:Coroutine</code>
             </li>
             <li>
               <code>e:</code> - Searches the card's full effect text for the
@@ -55,8 +58,8 @@
             </li>
             <li>
               <code>slot:</code> - Cards whose effects match the slot
-              requirement. Can write multiple slots separated with slashes; e.g.
-              <code>slot:3</code> or <code>slot:1/2</code>
+              requirement; e.g. <code>slot:3</code>. Use OR for multiple values
+              e.g. <code>(slot: 1 OR slot:2)</code>
             </li>
             <li>
               <code>!&lt;condition&gt;:</code> or
@@ -122,13 +125,18 @@
           </p>
         </details>
       </div>
-      <div class="grid">
+      <div id="grid" class="grid">
+        <!-- <img src="../assets/INDEXR.webp" class="card" />
         <img src="../assets/INDEXR.webp" class="card" />
         <img src="../assets/INDEXR.webp" class="card" />
         <img src="../assets/INDEXR.webp" class="card" />
         <img src="../assets/INDEXR.webp" class="card" />
-        <img src="../assets/INDEXR.webp" class="card" />
-        <img src="../assets/INDEXR.webp" class="card" />
+        <img src="../assets/INDEXR.webp" class="card" /> -->
+      </div>
+      <div id="pagecontainer">
+        <button id="prevpage">&lt;</button>
+        <span id="pages"></span>
+        <button id="nextpage">&gt;</button>
       </div>
     </div>
   </body>

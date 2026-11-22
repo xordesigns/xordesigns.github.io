@@ -46,3 +46,7 @@
   border-radius: 8px;
   font-size: inherit;
 }
+
+.currentpage{
+  background-color: indianred;
+}
